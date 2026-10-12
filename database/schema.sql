@@ -82,3 +82,213 @@ CREATE TABLE contrat (
   CONSTRAINT ck_contrat_salaire CHECK (salaire_base >= 0 AND duree_mensuelle_heures > 0)
 ) ENGINE=InnoDB;
 
+
+CREATE TABLE type_conge (
+  id_type_conge       INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  libelle             VARCHAR(80) NOT NULL,
+  jours_par_an        DECIMAL(5,1) NOT NULL DEFAULT 0,
+  remunere            TINYINT(1) NOT NULL DEFAULT 1,
+  justificatif_requis TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id_type_conge),
+  UNIQUE KEY uq_type_conge_libelle (libelle)
+) ENGINE=InnoDB;
+
+CREATE TABLE solde_conge (
+  id_solde       INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe     INT UNSIGNED NOT NULL,
+  id_type_conge  INT UNSIGNED NOT NULL,
+  annee          SMALLINT UNSIGNED NOT NULL,
+  jours_acquis   DECIMAL(5,1) NOT NULL DEFAULT 0,
+  jours_pris     DECIMAL(5,1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id_solde),
+  UNIQUE KEY uq_solde (id_employe, id_type_conge, annee),
+  CONSTRAINT fk_solde_employe FOREIGN KEY (id_employe)    REFERENCES employe (id_employe),
+  CONSTRAINT fk_solde_type    FOREIGN KEY (id_type_conge) REFERENCES type_conge (id_type_conge),
+  CONSTRAINT ck_solde CHECK (jours_acquis >= 0 AND jours_pris >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE demande_conge (
+  id_demande_conge INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe       INT UNSIGNED NOT NULL,
+  id_type_conge    INT UNSIGNED NOT NULL,
+  date_debut       DATE NOT NULL,
+  date_fin         DATE NOT NULL,
+  nb_jours_ouvres  DECIMAL(5,1) NOT NULL,
+  motif            VARCHAR(255) NULL,
+  justificatif     VARCHAR(255) NULL,
+  statut           ENUM('EN_ATTENTE_AVIS','EN_ATTENTE_RH','APPROUVE','REFUSE','ANNULE') NOT NULL DEFAULT 'EN_ATTENTE_AVIS',
+  date_depot       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_demande_conge),
+  KEY idx_demande_employe (id_employe, date_debut),
+  KEY idx_demande_statut (statut),
+  CONSTRAINT fk_demande_employe FOREIGN KEY (id_employe)    REFERENCES employe (id_employe),
+  CONSTRAINT fk_demande_type    FOREIGN KEY (id_type_conge) REFERENCES type_conge (id_type_conge),
+  CONSTRAINT ck_demande_dates   CHECK (date_fin >= date_debut AND nb_jours_ouvres > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE presence (
+  id_presence    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe     INT UNSIGNED NOT NULL,
+  date_presence  DATE NOT NULL,
+  statut         ENUM('PRESENT','ABSENT','JUSTIFIE','RETARD') NOT NULL DEFAULT 'PRESENT',
+  motif          VARCHAR(255) NULL,
+  PRIMARY KEY (id_presence),
+  UNIQUE KEY uq_presence (id_employe, date_presence),
+  CONSTRAINT fk_presence_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe)
+) ENGINE=InnoDB;
+
+CREATE TABLE type_rubrique (
+  id_type_rubrique  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  code              VARCHAR(30) NOT NULL,
+  libelle           VARCHAR(100) NOT NULL,
+  nature            ENUM('PRIME','HEURES_SUP','RETENUE') NOT NULL,
+  mode_calcul       ENUM('MONTANT_FIXE','POURCENTAGE_BRUT') NOT NULL DEFAULT 'MONTANT_FIXE',
+  valeur_par_defaut DECIMAL(12,2) NOT NULL DEFAULT 0,
+  actif             TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id_type_rubrique),
+  UNIQUE KEY uq_type_rubrique_code (code)
+) ENGINE=InnoDB;
+
+CREATE TABLE rubrique_poste (                                       
+  id_rubrique_poste INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_poste          INT UNSIGNED NOT NULL,
+  id_type_rubrique  INT UNSIGNED NOT NULL,
+  montant           DECIMAL(12,2) NOT NULL,
+  PRIMARY KEY (id_rubrique_poste),
+  UNIQUE KEY uq_rubrique_poste (id_poste, id_type_rubrique),
+  CONSTRAINT fk_rubrique_poste_poste FOREIGN KEY (id_poste)         REFERENCES poste (id_poste),
+  CONSTRAINT fk_rubrique_poste_type  FOREIGN KEY (id_type_rubrique) REFERENCES type_rubrique (id_type_rubrique)
+) ENGINE=InnoDB;
+
+CREATE TABLE rubrique_employe (                                    
+  id_employe          INT UNSIGNED NOT NULL,
+  id_type_rubrique    INT UNSIGNED NOT NULL,
+  montant             DECIMAL(12,2) NOT NULL,
+  date_debut          DATE NOT NULL,
+  date_fin            DATE NULL,
+  justification       VARCHAR(255) NULL,
+  PRIMARY KEY (id_rubrique_employe),
+  KEY idx_rubrique_employe (id_employe, date_debut),
+  CONSTRAINT fk_rubrique_employe_employe FOREIGN KEY (id_employe)       REFERENCES employe (id_employe),
+  CONSTRAINT fk_rubrique_employe_type    FOREIGN KEY (id_type_rubrique) REFERENCES type_rubrique (id_type_rubrique),
+  CONSTRAINT ck_rubrique_employe CHECK (date_fin IS NULL OR date_fin >= date_debut)
+) ENGINE=InnoDB;
+
+CREATE TABLE parametre_paie (
+  id_parametre INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  cle          VARCHAR(50) NOT NULL,
+  valeur       VARCHAR(100) NOT NULL,
+  description  VARCHAR(255) NULL,
+  date_effet   DATE NOT NULL,
+  PRIMARY KEY (id_parametre),
+  UNIQUE KEY uq_parametre_cle (cle)
+) ENGINE=InnoDB;
+
+CREATE TABLE document_employe (
+  id_document      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe       INT UNSIGNED NOT NULL,
+  id_contrat       INT UNSIGNED NULL,                              
+  `type`           ENUM('CONTRAT','ATTESTATION','FICHE_PAIE','JUSTIFICATIF','AUTRE') NOT NULL,
+  nom_fichier      VARCHAR(150) NOT NULL,
+  `format`         VARCHAR(10) NOT NULL,
+  chemin_stockage  VARCHAR(255) NOT NULL,                          
+  PRIMARY KEY (id_document),
+  KEY idx_document_employe (id_employe, `type`),
+  CONSTRAINT fk_document_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
+  CONSTRAINT fk_document_contrat FOREIGN KEY (id_contrat) REFERENCES contrat (id_contrat)
+) ENGINE=InnoDB;
+
+CREATE TABLE fiche_paie (
+  id_fiche          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe        INT UNSIGNED NOT NULL,
+  id_document       INT UNSIGNED NULL,                              
+  mois              TINYINT UNSIGNED NOT NULL,
+  annee             SMALLINT UNSIGNED NOT NULL,
+  salaire_brut      DECIMAL(12,2) NOT NULL,
+  total_primes      DECIMAL(12,2) NOT NULL DEFAULT 0,
+  total_heures_sup  DECIMAL(12,2) NOT NULL DEFAULT 0,
+  total_retenues    DECIMAL(12,2) NOT NULL DEFAULT 0,
+  salaire_net       DECIMAL(12,2) NOT NULL,                         
+  statut            ENUM('BROUILLON','VERIFIEE','VALIDEE','ARCHIVEE') NOT NULL DEFAULT 'BROUILLON',
+  anomalie_detectee TINYINT(1) NOT NULL DEFAULT 0,
+  date_generation   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  date_envoi        DATETIME NULL,
+  PRIMARY KEY (id_fiche),
+  UNIQUE KEY uq_fiche_periode (id_employe, annee, mois),            
+  UNIQUE KEY uq_fiche_document (id_document),
+  KEY idx_fiche_statut (statut),
+  CONSTRAINT fk_fiche_employe  FOREIGN KEY (id_employe)  REFERENCES employe (id_employe),
+  CONSTRAINT fk_fiche_document FOREIGN KEY (id_document) REFERENCES document_employe (id_document),
+  CONSTRAINT ck_fiche_mois CHECK (mois BETWEEN 1 AND 12)
+) ENGINE=InnoDB;
+
+CREATE TABLE rubrique_paie (                                        
+  id_fiche         INT UNSIGNED NOT NULL,
+  id_type_rubrique INT UNSIGNED NOT NULL,
+  libelle          VARCHAR(150) NOT NULL,
+  nature           ENUM('PRIME','HEURES_SUP','RETENUE') NOT NULL,
+  origine          ENUM('POSTE','EMPLOYE','EXCEPTIONNELLE','HEURES_SUP','AVANCE') NOT NULL,
+  base             DECIMAL(12,2) NULL,                              
+  taux             DECIMAL(8,2) NULL,                              
+  montant          DECIMAL(12,2) NOT NULL,
+  justification    VARCHAR(255) NULL,                              
+  PRIMARY KEY (id_rubrique),
+  KEY idx_rubrique_fiche (id_fiche),
+  CONSTRAINT fk_rubrique_fiche FOREIGN KEY (id_fiche)         REFERENCES fiche_paie (id_fiche) ON DELETE CASCADE,
+  CONSTRAINT fk_rubrique_type  FOREIGN KEY (id_type_rubrique) REFERENCES type_rubrique (id_type_rubrique)
+) ENGINE=InnoDB;
+
+CREATE TABLE heure_supplementaire (
+  id_heure_sup    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe      INT UNSIGNED NOT NULL,
+  id_fiche        INT UNSIGNED NULL,                                
+  date_travail    DATE NOT NULL,
+  nb_heures       DECIMAL(5,2) NOT NULL,
+  code_majoration VARCHAR(30) NOT NULL,                             
+  taux_majoration DECIMAL(5,2) NOT NULL,                           
+  motif           VARCHAR(255) NULL,
+  statut          ENUM('SAISIE','VALIDEE_CHEF','INTEGREE','REJETEE') NOT NULL DEFAULT 'SAISIE',
+  PRIMARY KEY (id_heure_sup),
+  KEY idx_hs_employe (id_employe, date_travail),
+  KEY idx_hs_statut (statut),
+  CONSTRAINT fk_hs_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
+  CONSTRAINT fk_hs_fiche   FOREIGN KEY (id_fiche)   REFERENCES fiche_paie (id_fiche),
+  CONSTRAINT ck_hs CHECK (nb_heures > 0 AND taux_majoration > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE avance_salaire (
+  id_avance     INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe    INT UNSIGNED NOT NULL,
+  id_fiche      INT UNSIGNED NULL,                                  
+  motif         VARCHAR(255) NULL,
+  date_demande  DATE NOT NULL,
+  statut        ENUM('EN_ATTENTE','VALIDEE','REFUSEE','DEDUITE') NOT NULL DEFAULT 'EN_ATTENTE',
+  PRIMARY KEY (id_avance),
+  KEY idx_avance_employe (id_employe),
+  KEY idx_avance_statut (statut),
+  CONSTRAINT fk_avance_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
+  CONSTRAINT fk_avance_fiche   FOREIGN KEY (id_fiche)   REFERENCES fiche_paie (id_fiche),
+  CONSTRAINT ck_avance CHECK (montant > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE validation (
+  id_validation    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_valideur      INT UNSIGNED NOT NULL,                           -- employé (chef, RH ou directeur) qui décide
+  id_demande_conge INT UNSIGNED NULL,
+  id_heure_sup     INT UNSIGNED NULL,
+  id_avance        INT UNSIGNED NULL,
+  etape            ENUM('AVIS_CHEF','DECISION_RH') NOT NULL,
+  decision         ENUM('APPROUVE','REFUSE') NOT NULL,
+  commentaire      VARCHAR(255) NULL,
+  date_validation  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_validation),
+  UNIQUE KEY uq_validation_conge (id_demande_conge, etape),         
+  UNIQUE KEY uq_validation_hs    (id_heure_sup, etape),
+  UNIQUE KEY uq_validation_avance (id_avance, etape),
+  CONSTRAINT fk_validation_valideur FOREIGN KEY (id_valideur)      REFERENCES employe (id_employe),
+  CONSTRAINT fk_validation_conge    FOREIGN KEY (id_demande_conge) REFERENCES demande_conge (id_demande_conge),
+  CONSTRAINT fk_validation_hs       FOREIGN KEY (id_heure_sup)     REFERENCES heure_supplementaire (id_heure_sup),
+  CONSTRAINT fk_validation_avance   FOREIGN KEY (id_avance)        REFERENCES avance_salaire (id_avance),
+  CONSTRAINT ck_validation_une_cible                                   
+    CHECK ((id_demande_conge IS NOT NULL) + (id_heure_sup IS NOT NULL) + (id_avance IS NOT NULL) = 1)
+) ENGINE=InnoDB;
