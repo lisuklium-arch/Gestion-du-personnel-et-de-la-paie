@@ -1,0 +1,25 @@
+SELECT 'Utilisateur sans employé' AS controle, COUNT(*) AS anomalies FROM utilisateur u LEFT JOIN employe e ON e.id_utilisateur = u.id_utilisateur WHERE e.id_employe IS NULL
+UNION ALL SELECT 'Chef de département sans rôle chef/directeur', COUNT(*) FROM departement d JOIN employe e ON e.id_employe = d.id_chef JOIN utilisateur u ON u.id_utilisateur = e.id_utilisateur WHERE u.role NOT IN ('CHEF_DEPARTEMENT','DIRECTEUR_GENERAL')
+UNION ALL SELECT 'Rôle chef sans département dirigé', COUNT(*) FROM utilisateur u JOIN employe e ON e.id_utilisateur = u.id_utilisateur LEFT JOIN departement d ON d.id_chef = e.id_employe WHERE u.role = 'CHEF_DEPARTEMENT' AND d.id_departement IS NULL
+UNION ALL SELECT 'Employé sans contrat actif ou avec plusieurs', COUNT(*) FROM employe e WHERE (SELECT COUNT(*) FROM contrat c WHERE c.id_employe = e.id_employe AND c.actif = 1) <> 1
+UNION ALL SELECT 'Mot de passe non haché', COUNT(*) FROM utilisateur WHERE mot_de_passe_hash NOT LIKE '$2y$%' AND mot_de_passe_hash NOT LIKE '$argon2%'
+UNION ALL SELECT 'Fiche : totaux différents des rubriques', COUNT(*) FROM fiche_paie f WHERE f.total_primes <> (SELECT COALESCE(SUM(montant),0) FROM rubrique_paie r WHERE r.id_fiche = f.id_fiche AND r.nature = 'PRIME') OR f.total_heures_sup <> (SELECT COALESCE(SUM(montant),0) FROM rubrique_paie r WHERE r.id_fiche = f.id_fiche AND r.nature = 'HEURES_SUP') OR f.total_retenues <> (SELECT COALESCE(SUM(montant),0) FROM rubrique_paie r WHERE r.id_fiche = f.id_fiche AND r.nature = 'RETENUE')
+UNION ALL SELECT 'Fiche : net ≠ brut + primes + heures sup − retenues', COUNT(*) FROM fiche_paie WHERE salaire_net <> salaire_brut + total_primes + total_heures_sup - total_retenues
+UNION ALL SELECT 'Fiche : brut ≠ salaire du contrat actif', COUNT(*) FROM fiche_paie f JOIN contrat c ON c.id_employe = f.id_employe AND c.actif = 1 WHERE f.salaire_brut <> c.salaire_base
+UNION ALL SELECT 'Fiche : document archivé qui n''est pas une fiche', COUNT(*) FROM fiche_paie f JOIN document_employe d ON d.id_document = f.id_document WHERE d.`type` <> 'FICHE_PAIE' OR d.id_employe <> f.id_employe
+UNION ALL SELECT 'Attestation : document qui n''est pas une attestation', COUNT(*) FROM demande_attestation a JOIN document_employe d ON d.id_document = a.id_document WHERE d.`type` <> 'ATTESTATION' OR d.id_employe <> a.id_employe
+UNION ALL SELECT 'Document stocké dans un dossier public', COUNT(*) FROM document_employe WHERE chemin_stockage LIKE 'public/%' OR chemin_stockage LIKE '/%' OR chemin_stockage LIKE '%..%'
+UNION ALL SELECT 'Solde de congé : jours pris ≠ congés approuvés', COUNT(*) FROM solde_conge s WHERE s.jours_pris <> (SELECT COALESCE(SUM(d.nb_jours_ouvres),0) FROM demande_conge d WHERE d.id_employe = s.id_employe AND d.id_type_conge = s.id_type_conge AND YEAR(d.date_debut) = s.annee AND d.statut = 'APPROUVE')
+UNION ALL SELECT 'Congé : statut incohérent avec les validations', COUNT(*) FROM demande_conge d WHERE
+   (d.statut = 'EN_ATTENTE_AVIS' AND EXISTS (SELECT 1 FROM validation v WHERE v.id_demande_conge = d.id_demande_conge))
+   OR (d.statut = 'EN_ATTENTE_RH' AND NOT EXISTS (SELECT 1 FROM validation v WHERE v.id_demande_conge = d.id_demande_conge AND v.etape = 'AVIS_CHEF'))
+   OR (d.statut IN ('APPROUVE','REFUSE') AND NOT EXISTS (SELECT 1 FROM validation v WHERE v.id_demande_conge = d.id_demande_conge AND v.etape = 'DECISION_RH'))
+UNION ALL SELECT 'Avis donné par un autre que le chef du département', COUNT(*) FROM validation v
+   LEFT JOIN demande_conge dc ON dc.id_demande_conge = v.id_demande_conge LEFT JOIN heure_supplementaire hs ON hs.id_heure_sup = v.id_heure_sup
+   JOIN employe dem ON dem.id_employe = COALESCE(dc.id_employe, hs.id_employe) JOIN departement dep ON dep.id_departement = dem.id_departement
+   WHERE v.etape = 'AVIS_CHEF' AND dep.id_chef <> v.id_valideur
+UNION ALL SELECT 'Décision RH donnée par un non-RH', COUNT(*) FROM validation v JOIN employe e ON e.id_employe = v.id_valideur JOIN utilisateur u ON u.id_utilisateur = e.id_utilisateur WHERE v.etape = 'DECISION_RH' AND u.role <> 'RESPONSABLE_RH'
+UNION ALL SELECT 'Heure sup : statut incohérent avec la fiche', COUNT(*) FROM heure_supplementaire WHERE (statut = 'INTEGREE' AND id_fiche IS NULL) OR (statut <> 'INTEGREE' AND id_fiche IS NOT NULL)
+UNION ALL SELECT 'Heure sup : montant ≠ taux horaire × heures × majoration', COUNT(*) FROM heure_supplementaire h JOIN contrat c ON c.id_employe = h.id_employe AND c.actif = 1 WHERE ABS(h.montant - ROUND(c.salaire_base / c.duree_mensuelle_heures * h.nb_heures * h.taux_majoration / 100, 2)) > 0.01
+UNION ALL SELECT 'Avance déduite : fiche absente ou montant différent', COUNT(*) FROM avance_salaire a WHERE a.statut = 'DEDUITE' AND (a.id_fiche IS NULL OR NOT EXISTS (SELECT 1 FROM rubrique_paie r WHERE r.id_fiche = a.id_fiche AND r.origine = 'AVANCE' AND r.montant = a.montant))
+UNION ALL SELECT 'Rubrique exceptionnelle sans justification', COUNT(*) FROM rubrique_paie WHERE origine = 'EXCEPTIONNELLE' AND (justification IS NULL OR justification = '');

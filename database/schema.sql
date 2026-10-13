@@ -273,7 +273,7 @@ CREATE TABLE avance_salaire (
 
 CREATE TABLE validation (
   id_validation    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  id_valideur      INT UNSIGNED NOT NULL,                           -- employé (chef, RH ou directeur) qui décide
+  id_valideur      INT UNSIGNED NOT NULL,                          
   id_demande_conge INT UNSIGNED NULL,
   id_heure_sup     INT UNSIGNED NULL,
   id_avance        INT UNSIGNED NULL,
@@ -292,3 +292,68 @@ CREATE TABLE validation (
   CONSTRAINT ck_validation_une_cible                                   
     CHECK ((id_demande_conge IS NOT NULL) + (id_heure_sup IS NOT NULL) + (id_avance IS NOT NULL) = 1)
 ) ENGINE=InnoDB;
+
+
+CREATE TABLE demande_attestation (
+  id_demande_attestation INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe             INT UNSIGNED NOT NULL,
+  id_document            INT UNSIGNED NULL,                         
+  type_attestation       VARCHAR(100) NOT NULL,
+  motif                  VARCHAR(255) NULL,
+  date_demande           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  statut                 ENUM('EN_ATTENTE','ACCEPTEE','REFUSEE') NOT NULL DEFAULT 'EN_ATTENTE',
+  date_traitement        DATETIME NULL,
+  commentaire_rh         VARCHAR(255) NULL,
+  PRIMARY KEY (id_demande_attestation),
+  UNIQUE KEY uq_attestation_document (id_document),
+  KEY idx_attestation_statut (statut),
+  CONSTRAINT fk_attestation_employe  FOREIGN KEY (id_employe)  REFERENCES employe (id_employe),
+  CONSTRAINT fk_attestation_document FOREIGN KEY (id_document) REFERENCES document_employe (id_document)
+) ENGINE=InnoDB;
+
+CREATE TABLE demande_modification (
+  id_demande_modification INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe              INT UNSIGNED NOT NULL,
+  champ_concerne          VARCHAR(50) NOT NULL,
+  nouvelle_valeur         VARCHAR(255) NOT NULL,
+  motif                   VARCHAR(255) NULL,
+  date_demande            DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  statut                  ENUM('EN_ATTENTE','ACCEPTEE','REFUSEE') NOT NULL DEFAULT 'EN_ATTENTE',
+  date_traitement         DATETIME NULL,
+  commentaire_rh          VARCHAR(255) NULL,
+  PRIMARY KEY (id_demande_modification),
+  KEY idx_modification_statut (statut),
+  CONSTRAINT fk_modification_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe)
+) ENGINE=InnoDB;
+
+
+CREATE TABLE notification (
+  id_notification   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_utilisateur    INT UNSIGNED NOT NULL,
+  titre             VARCHAR(150) NOT NULL,
+  message           TEXT NOT NULL,
+  `type`            VARCHAR(30) NOT NULL,
+  lue               TINYINT(1) NOT NULL DEFAULT 0,
+  envoyee_par_email TINYINT(1) NOT NULL DEFAULT 0,
+  date_creation     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_notification),
+  KEY idx_notification_utilisateur (id_utilisateur, lue),
+  CONSTRAINT fk_notification_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES utilisateur (id_utilisateur) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE journal_action (
+  id_journal      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_utilisateur  INT UNSIGNED NOT NULL,
+  action          VARCHAR(100) NOT NULL,
+  entite          VARCHAR(50) NOT NULL,
+  id_entite       INT UNSIGNED NULL,
+  details         TEXT NULL,
+  adresse_ip      VARCHAR(45) NULL,
+  date_action     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_journal),
+  KEY idx_journal_date (date_action),
+  KEY idx_journal_utilisateur (id_utilisateur),
+  CONSTRAINT fk_journal_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES utilisateur (id_utilisateur)
+) ENGINE=InnoDB;
+
+
