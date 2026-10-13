@@ -1,3 +1,4 @@
+
 SELECT 'Utilisateur sans employé' AS controle, COUNT(*) AS anomalies FROM utilisateur u LEFT JOIN employe e ON e.id_utilisateur = u.id_utilisateur WHERE e.id_employe IS NULL
 UNION ALL SELECT 'Chef de département sans rôle chef/directeur', COUNT(*) FROM departement d JOIN employe e ON e.id_employe = d.id_chef JOIN utilisateur u ON u.id_utilisateur = e.id_utilisateur WHERE u.role NOT IN ('CHEF_DEPARTEMENT','DIRECTEUR_GENERAL')
 UNION ALL SELECT 'Rôle chef sans département dirigé', COUNT(*) FROM utilisateur u JOIN employe e ON e.id_utilisateur = u.id_utilisateur LEFT JOIN departement d ON d.id_chef = e.id_employe WHERE u.role = 'CHEF_DEPARTEMENT' AND d.id_departement IS NULL

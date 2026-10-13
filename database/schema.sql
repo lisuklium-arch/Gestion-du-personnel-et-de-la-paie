@@ -3,14 +3,14 @@ DROP DATABASE IF EXISTS personnel_paie;
 CREATE DATABASE personnel_paie CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE personnel_paie;
 
-
 CREATE TABLE utilisateur (
   id_utilisateur        INT UNSIGNED NOT NULL AUTO_INCREMENT,
   email                 VARCHAR(150) NOT NULL,
-  mot_de_passe_hash     VARCHAR(255) NOT NULL,                      
+  mot_de_passe_hash     VARCHAR(255) NOT NULL,                     
   role                  ENUM('EMPLOYE','CHEF_DEPARTEMENT','RESPONSABLE_RH','DIRECTEUR_GENERAL') NOT NULL DEFAULT 'EMPLOYE',
   statut                ENUM('EN_ATTENTE','ACTIF','DESACTIVE') NOT NULL DEFAULT 'EN_ATTENTE',
-  token_reinitialisation VARCHAR(64) NULL,                          
+  token_reinitialisation VARCHAR(64) NULL,                         
+  expiration_token      DATETIME NULL,
   derniere_connexion    DATETIME NULL,
   date_creation         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_utilisateur),
@@ -30,8 +30,9 @@ CREATE TABLE departement (
   code                  VARCHAR(20) NOT NULL,
   nom                   VARCHAR(100) NOT NULL,
   description           VARCHAR(255) NULL,
-  id_chef               INT UNSIGNED NULL,                         
-  PRIMARY KEY (id_departement),
+  id_chef               INT UNSIGNED NULL,                          
+  id_departement_parent INT UNSIGNED NULL,  
+   PRIMARY KEY (id_departement),                        
   UNIQUE KEY uq_departement_code (code),
   CONSTRAINT fk_departement_parent FOREIGN KEY (id_departement_parent) REFERENCES departement (id_departement)
 ) ENGINE=InnoDB;
@@ -63,6 +64,7 @@ CREATE TABLE employe (
 ALTER TABLE departement
   ADD CONSTRAINT fk_departement_chef FOREIGN KEY (id_chef) REFERENCES employe (id_employe),
   ADD UNIQUE KEY uq_departement_chef (id_chef);                     
+
 CREATE TABLE contrat (
   id_contrat              INT UNSIGNED NOT NULL AUTO_INCREMENT,
   id_employe              INT UNSIGNED NOT NULL,
@@ -137,6 +139,7 @@ CREATE TABLE presence (
   CONSTRAINT fk_presence_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe)
 ) ENGINE=InnoDB;
 
+
 CREATE TABLE type_rubrique (
   id_type_rubrique  INT UNSIGNED NOT NULL AUTO_INCREMENT,
   code              VARCHAR(30) NOT NULL,
@@ -160,7 +163,8 @@ CREATE TABLE rubrique_poste (
   CONSTRAINT fk_rubrique_poste_type  FOREIGN KEY (id_type_rubrique) REFERENCES type_rubrique (id_type_rubrique)
 ) ENGINE=InnoDB;
 
-CREATE TABLE rubrique_employe (                                    
+CREATE TABLE rubrique_employe (                                     
+  id_rubrique_employe INT UNSIGNED NOT NULL AUTO_INCREMENT,
   id_employe          INT UNSIGNED NOT NULL,
   id_type_rubrique    INT UNSIGNED NOT NULL,
   montant             DECIMAL(12,2) NOT NULL,
@@ -184,14 +188,16 @@ CREATE TABLE parametre_paie (
   UNIQUE KEY uq_parametre_cle (cle)
 ) ENGINE=InnoDB;
 
+
 CREATE TABLE document_employe (
   id_document      INT UNSIGNED NOT NULL AUTO_INCREMENT,
   id_employe       INT UNSIGNED NOT NULL,
-  id_contrat       INT UNSIGNED NULL,                              
+  id_contrat       INT UNSIGNED NULL,                               
   `type`           ENUM('CONTRAT','ATTESTATION','FICHE_PAIE','JUSTIFICATIF','AUTRE') NOT NULL,
   nom_fichier      VARCHAR(150) NOT NULL,
   `format`         VARCHAR(10) NOT NULL,
-  chemin_stockage  VARCHAR(255) NOT NULL,                          
+  chemin_stockage  VARCHAR(255) NOT NULL,                           
+  date_ajout       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_document),
   KEY idx_document_employe (id_employe, `type`),
   CONSTRAINT fk_document_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
@@ -223,15 +229,16 @@ CREATE TABLE fiche_paie (
 ) ENGINE=InnoDB;
 
 CREATE TABLE rubrique_paie (                                        
+  id_rubrique      INT UNSIGNED NOT NULL AUTO_INCREMENT,
   id_fiche         INT UNSIGNED NOT NULL,
   id_type_rubrique INT UNSIGNED NOT NULL,
   libelle          VARCHAR(150) NOT NULL,
   nature           ENUM('PRIME','HEURES_SUP','RETENUE') NOT NULL,
   origine          ENUM('POSTE','EMPLOYE','EXCEPTIONNELLE','HEURES_SUP','AVANCE') NOT NULL,
   base             DECIMAL(12,2) NULL,                              
-  taux             DECIMAL(8,2) NULL,                              
+  taux             DECIMAL(8,2) NULL,                               
   montant          DECIMAL(12,2) NOT NULL,
-  justification    VARCHAR(255) NULL,                              
+  justification    VARCHAR(255) NULL,                               
   PRIMARY KEY (id_rubrique),
   KEY idx_rubrique_fiche (id_fiche),
   CONSTRAINT fk_rubrique_fiche FOREIGN KEY (id_fiche)         REFERENCES fiche_paie (id_fiche) ON DELETE CASCADE,
@@ -245,7 +252,8 @@ CREATE TABLE heure_supplementaire (
   date_travail    DATE NOT NULL,
   nb_heures       DECIMAL(5,2) NOT NULL,
   code_majoration VARCHAR(30) NOT NULL,                             
-  taux_majoration DECIMAL(5,2) NOT NULL,                           
+  taux_majoration DECIMAL(5,2) NOT NULL,                            
+  montant         DECIMAL(12,2) NULL,
   motif           VARCHAR(255) NULL,
   statut          ENUM('SAISIE','VALIDEE_CHEF','INTEGREE','REJETEE') NOT NULL DEFAULT 'SAISIE',
   PRIMARY KEY (id_heure_sup),
@@ -260,6 +268,7 @@ CREATE TABLE avance_salaire (
   id_avance     INT UNSIGNED NOT NULL AUTO_INCREMENT,
   id_employe    INT UNSIGNED NOT NULL,
   id_fiche      INT UNSIGNED NULL,                                  
+  montant       DECIMAL(12,2) NOT NULL,
   motif         VARCHAR(255) NULL,
   date_demande  DATE NOT NULL,
   statut        ENUM('EN_ATTENTE','VALIDEE','REFUSEE','DEDUITE') NOT NULL DEFAULT 'EN_ATTENTE',
@@ -271,9 +280,10 @@ CREATE TABLE avance_salaire (
   CONSTRAINT ck_avance CHECK (montant > 0)
 ) ENGINE=InnoDB;
 
+
 CREATE TABLE validation (
   id_validation    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  id_valideur      INT UNSIGNED NOT NULL,                          
+  id_valideur      INT UNSIGNED NOT NULL,                           
   id_demande_conge INT UNSIGNED NULL,
   id_heure_sup     INT UNSIGNED NULL,
   id_avance        INT UNSIGNED NULL,
@@ -289,10 +299,9 @@ CREATE TABLE validation (
   CONSTRAINT fk_validation_conge    FOREIGN KEY (id_demande_conge) REFERENCES demande_conge (id_demande_conge),
   CONSTRAINT fk_validation_hs       FOREIGN KEY (id_heure_sup)     REFERENCES heure_supplementaire (id_heure_sup),
   CONSTRAINT fk_validation_avance   FOREIGN KEY (id_avance)        REFERENCES avance_salaire (id_avance),
-  CONSTRAINT ck_validation_une_cible                                   
+  CONSTRAINT ck_validation_une_cible                                  
     CHECK ((id_demande_conge IS NOT NULL) + (id_heure_sup IS NOT NULL) + (id_avance IS NOT NULL) = 1)
 ) ENGINE=InnoDB;
-
 
 CREATE TABLE demande_attestation (
   id_demande_attestation INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -355,5 +364,3 @@ CREATE TABLE journal_action (
   KEY idx_journal_utilisateur (id_utilisateur),
   CONSTRAINT fk_journal_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES utilisateur (id_utilisateur)
 ) ENGINE=InnoDB;
-
-
