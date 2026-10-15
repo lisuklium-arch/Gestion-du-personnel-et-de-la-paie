@@ -1,0 +1,89 @@
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, .h1, .text-page-title {
+  font-size: var(--font-size-title-mobile);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+}
+
+h2, .h2, .text-section-title {
+  font-size: var(--font-size-section-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+@media (min-width: 992px) {
+  h1, .h1, .text-page-title {
+    font-size: var(--font-size-page-title);
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+p {
+  margin-bottom: var(--space-3);
+}
+
+.text-muted,
+.text-secondary-custom {
+  color: var(--color-text-muted) !important;
+}
+
+.text-label {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+.text-meta {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.text-kpi {
+  font-size: var(--font-size-kpi);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+a {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+:root {
+  --bs-body-font-family: var(--font-family-base);
+  --bs-body-font-size: var(--font-size-body);
+  --bs-body-color: var(--color-text);
+  --bs-body-bg: var(--color-bg);
+  --bs-border-color: var(--color-border);
+  --bs-border-radius: var(--radius);
+  --bs-border-radius-lg: var(--radius);
+  --bs-link-color: var(--color-primary);
+  --bs-link-hover-color: var(--color-primary-hover);
+
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: var(--color-primary-rgb);
+  --bs-success: var(--color-success);
+  --bs-warning: var(--color-warning);
+  --bs-danger: var(--color-danger);
+}
