@@ -8,7 +8,7 @@ if (in_array($role, ['cd', 'rh'], true)) {
 <aside class="app-sidebar" aria-label="Navigation principale">
     <div class="app-sidebar__brand">
         <p class="app-sidebar__title " style="margin-left: 2.5rem;font-size: 2rem;">PerPay</p>
-        <p class="app-sidebar__role" style="margin-left: 4rem;">Employé</p>
+        <p class="app-sidebar__role" style="margin-left: 4rem;"><?php $_SESSION['role'] ?></p>
     </div>
 
     <nav aria-label="Menu Employé">
@@ -34,7 +34,7 @@ if (in_array($role, ['cd', 'rh'], true)) {
     </nav>
 
     <div class="app-sidebar__footer">
-        <p class="app-user__name">Marie Ngo Ndjock</p>
+        <p class="app-user__name"><?= h($_SESSION['nom_affiche'] ?? '') ?></p>
         <p class="app-user__status">Compte actif</p>
         <a href="<?= $logoutUrl ?>" class="btn btn-neutral w-100 text-decoration-none">
             <i class="fa-solid fa-right-from-bracket me-2" aria-hidden="true"></i>Se déconnecter

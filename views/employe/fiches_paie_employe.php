@@ -1,3 +1,14 @@
+<?php
+require_once __DIR__ . '/../../config/init.php';
+require_once __DIR__ .'/../../models/Employe.php';
+exigerRole(['employe', 'chef', 'rh']);
+
+$moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+if ($moi === null) {
+    http_response_code(404);
+    exit('Aucun dossier employé n\'est associé à ce compte.');
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -37,7 +48,7 @@
 
       <main class="app-content">
         <p class="app-meta app-meta--chips">
-          <span>Marie Ngo Ndjock · EMP-0042 · Fiches validées uniquement</span>
+          <span><?= h($moi['prenom'] . ' ' . $moi['nom']) ?>· EMP-0042 · Fiches validées uniquement</span>
           <span class="ms-auto"><span class="badge-status badge-status--success">6 fiches</span></span>
         </p>
 

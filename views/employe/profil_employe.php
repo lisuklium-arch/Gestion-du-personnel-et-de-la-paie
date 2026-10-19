@@ -1,3 +1,14 @@
+<?php
+require_once __DIR__ . '/../../config/init.php';
+require_once __DIR__ .'/../../models/Employe.php';
+exigerRole(['employe', 'chef', 'rh']);
+
+$moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+if ($moi === null) {
+    http_response_code(404);
+    exit('Aucun dossier employé n\'est associé à ce compte.');
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -44,7 +55,7 @@
             <section class="card-panel">
               <div class="card-panel__head"><span class="icon-tile icon-tile--sm"><i class="fa-regular fa-user" aria-hidden="true"></i></span><h2 class="card-panel__title">Identité et coordonnées</h2><div class="card-panel__aside"><span class="badge-status badge-status--success badge-status--dot">Actif</span></div></div>
               <dl class="info-grid">
-                <div><dt>Nom complet</dt><dd>Marie Ngo Ndjock</dd></div>
+                <div><dt>Nom complet</dt><dd><?= h($moi['prenom'] . ' ' . $moi['nom']) ?></dd></div>
                 <div><dt>Matricule</dt><dd><span class="chip">EMP-0042</span></dd></div>
                 <div><dt>Date de naissance</dt><dd><i class="fa-regular fa-calendar" aria-hidden="true"></i>14/05/1992</dd></div>
                 <div><dt>Téléphone</dt><dd><i class="fa-solid fa-phone" aria-hidden="true"></i>+237 699 12 34 56</dd></div>
@@ -70,7 +81,7 @@
               <div class="app-person app-person--center">
                 <span class="avatar avatar--lg" aria-hidden="true">MN</span>
                 <div>
-                  <p class="app-person__name">Marie Ngo Ndjock</p>
+                  <p class="app-person__name"><?= h($moi['prenom'] . ' ' . $moi['nom']) ?></p>
                   <p class="app-person__meta">Comptable • Finance</p>
                 </div>
                 <span class="badge-status badge-status--success badge-status--dot">Actif</span>

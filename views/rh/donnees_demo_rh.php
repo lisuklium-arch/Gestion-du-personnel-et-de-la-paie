@@ -2,7 +2,18 @@
 
 require_once __DIR__ . '/../gestion/donnees_entreprise.php';
 
-$rh = ['nom' => 'Chantal Mvondo', 'prenom' => 'Chantal', 'poste' => 'Responsable RH'];
+require_once __DIR__ . '/../../models/Employe.php';
+$moiRh = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+if ($moiRh === null) {
+    http_response_code(404);
+    exit('Fiche employé introuvable pour ce compte.');
+}
+$rh = [
+    'nom' => $moiRh['nom'],
+    'prenom' => $moiRh['prenom'],
+    'poste' => $moiRh['poste'],
+    'departement' => $moiRh['departement'],
+];
 
 $stats = [
     'employes_actifs' => 48,

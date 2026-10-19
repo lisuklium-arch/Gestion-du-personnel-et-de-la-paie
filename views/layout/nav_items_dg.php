@@ -1,7 +1,7 @@
 <?php
 
 $active = $active ?? '';
-$logoutUrl = $logoutUrl ?? '/public/login.html';
+$logoutUrl = $logoutUrl ?? '/public/logout.php';
 
 $dgBase = '/views/dg/';
 

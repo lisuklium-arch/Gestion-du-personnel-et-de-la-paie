@@ -6,10 +6,7 @@ const MOIS_COURT  = [1 => 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'jui
 const JOURS_NOMS  = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.'];
 const JOURS_LONGS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
-function h($valeur): string
-{
-    return htmlspecialchars((string) $valeur, ENT_QUOTES, 'UTF-8');
-}
+
 
 function dateFr(string $date): string
 {

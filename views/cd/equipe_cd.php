@@ -1,5 +1,8 @@
 <?php
+require_once __DIR__ . '/../../config/init.php';
+exigerRole(['chef']);
 require_once __DIR__ . '/donnees_demo_cd.php';
+
 
 $pageTitle = 'Mon équipe';
 $active = 'equipe';

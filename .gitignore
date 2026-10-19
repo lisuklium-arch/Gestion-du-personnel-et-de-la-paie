@@ -7,3 +7,7 @@ uploads/
 *.log
 .DS_Store
 Thumbs.db
+storage/*
+!storage/*/
+storage/*/*
+!storage/*/.gitkeep

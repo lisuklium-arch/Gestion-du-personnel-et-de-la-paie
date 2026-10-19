@@ -1,3 +1,14 @@
+<?php
+require_once __DIR__ . '/../../config/init.php';
+require_once __DIR__ .'/../../models/Employe.php';
+exigerRole(['employe', 'chef', 'rh']);
+
+$moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+if ($moi === null) {
+    http_response_code(404);
+    exit('Aucun dossier employé n\'est associé à ce compte.');
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -36,7 +47,7 @@
       </header>
 
       <main class="app-content">
-        <p class="app-meta"><i class="fa-regular fa-user me-1" aria-hidden="true"></i>Marie Ngo Ndjock • EMP-0042 • Documents personnels et attestations</p>
+        <p class="app-meta"><i class="fa-regular fa-user me-1" aria-hidden="true"></i><?= h($moi['prenom'] . ' ' . $moi['nom']) ?>• EMP-0042 • Documents personnels et attestations</p>
 
         <section class="card-panel">
           <div class="card-panel__head"><span class="icon-tile icon-tile--sm"><i class="fa-regular fa-folder" aria-hidden="true"></i></span><h2 class="card-panel__title">Mes documents</h2></div>

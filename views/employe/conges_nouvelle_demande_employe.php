@@ -1,3 +1,14 @@
+<?php
+require_once __DIR__ . '/../../config/init.php';
+require_once __DIR__ .'/../../models/Employe.php';
+exigerRole(['employe', 'chef', 'rh']);
+
+$moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+if ($moi === null) {
+    http_response_code(404);
+    exit('Aucun dossier employé n\'est associé à ce compte.');
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -38,10 +49,9 @@
 
       <main class="app-content">
         <p class="app-meta app-meta--chips">
-          <span><i class="fa-regular fa-user me-1" aria-hidden="true"></i>Marie Ngo Ndjock</span>
+          <span><i class="fa-regular fa-user me-1" aria-hidden="true"></i><?= h($moi['prenom'] . ' ' . $moi['nom']) ?></span>
           <span><i class="fa-solid fa-hashtag me-1" aria-hidden="true"></i>EMP-0042</span>
-          <span class="badge-status badge-status--warning"><i class="fa-solid fa-clock" aria-hidden="true"></i>Demande non encore envoyée</span>
-        </p>
+          </p>
 
         <div class="app-split">
 

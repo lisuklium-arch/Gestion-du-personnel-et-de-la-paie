@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../config/init.php';
+exigerRole(['rh']);
 require_once __DIR__ . '/donnees_demo_rh.php';
 
 $espace = 'rh';

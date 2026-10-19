@@ -20,7 +20,7 @@
     </nav>
 
     <div class="app-sidebar__footer">
-        <p class="app-user__name">dg@entreprise.com</p>
+        <p class="app-user__name"><?= h($_SESSION['nom_affiche'] ?? '') ?></p>
         <p class="app-user__status">Compte actif</p>
         <a href="<?= $logoutUrl ?>" class="btn btn-neutral w-100 text-decoration-none">
             <i class="fa-solid fa-right-from-bracket me-2" aria-hidden="true"></i>Se déconnecter

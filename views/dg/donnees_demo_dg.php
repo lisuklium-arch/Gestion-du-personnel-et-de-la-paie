@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../gestion/donnees_entreprise.php';
 
-$dg = ['email' => 'dg@entreprise.com'];
+$dg = ['email' => $_SESSION['nom_affiche'] ?? ''];
 
 $stats = [
     'employes_actifs' => 48,

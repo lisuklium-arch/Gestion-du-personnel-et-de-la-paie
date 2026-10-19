@@ -4,7 +4,7 @@ $active = $active ?? '';
 
 $employeBase = '/views/employe/';
 
-$logoutUrl = '/public/login.html';
+$logoutUrl = '/public/logout.php';
 
 $navItems = [
     'accueil'      => ['label' => 'Accueil',        'short' => 'Accueil', 'icon' => 'fa-solid fa-house',               'file' => 'accueil_employe.php'],
@@ -19,4 +19,8 @@ $navItems = [
 $navBottom = ['accueil', 'conges', 'paie', 'profil'];
 $navPlus   = ['avances', 'documents', 'organigramme'];
 
-$role = $_COOKIE['perpay_role'] ?? '';
+// Le rôle vient de la session. 'chef' (base de données) correspond aux fichiers navbar_cd*.php
+$role = $_SESSION['role'] ?? '';
+if ($role === 'chef') {
+    $role = 'cd';
+}

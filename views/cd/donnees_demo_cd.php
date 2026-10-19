@@ -4,7 +4,17 @@ require_once __DIR__ . '/aides_cd.php';
 
 $aujourdhui = new DateTime('2026-10-09');
 
-$chef = ['nom' => 'Jean-Paul Mbarga', 'matricule' => 'EMP-0012', 'departement' => 'Finance'];
+require_once __DIR__ . '/../../models/Employe.php';
+$moiChef = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+if ($moiChef === null) {
+    http_response_code(404);
+    exit('Fiche employé introuvable pour ce compte.');
+}
+$chef = [
+    'nom' => $moiChef['prenom'] . ' ' . $moiChef['nom'],
+    'matricule' => $moiChef['matricule'],
+    'departement' => $moiChef['departement'],
+];
 
 $effectif = ['actifs' => 12, 'presents' => 11, 'en_conge' => 1, 'en_conge_detail' => 'Aline Njoya • 08–09 octobre'];
 

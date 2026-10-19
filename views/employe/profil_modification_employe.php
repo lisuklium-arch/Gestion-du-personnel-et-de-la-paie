@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../../config/init.php';
+exigerRole(['employe', 'chef', 'rh']);
+?>
 <!DOCTYPE html>
 <html lang="fr">
 

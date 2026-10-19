@@ -1,9 +1,19 @@
+<?php
+require __DIR__ . '/../config/init.php';
+
+// Déjà connecté : inutile d'afficher le formulaire
+if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
+    header('Location: ' . accueilPourRoleCourant());
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connexion — PerPay</title>
+  <meta name="csrf" content="<?= h(csrfToken()) ?>">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,20 +128,16 @@
     })();
 
     (function () {
-      var COMPTES = {
-        'dg@demo.test':    ['dg',      '/views/dg/tableau_bord_dg.php'],
-        'rh@demo.test':    ['rh',      '/views/rh/tableau_bord_rh.php'],
-        'chef@demo.test':  ['cd',      '/views/cd/equipe_cd.php'],
-        'alain@demo.test': ['employe', '/views/employe/accueil_employe.php'],
-        'marie@demo.test': ['employe', '/views/employe/accueil_employe.php'],
-        'david@demo.test': ['employe', '/views/employe/accueil_employe.php']
-      };
-      var MOT_DE_PASSE_DEMO = 'demo1234';
-
-      var form = document.getElementById('login-form');
+      var form   = document.getElementById('login-form');
       var erreur = document.getElementById('login-error');
+      var texte  = erreur.querySelector('span');
+      var bouton = form.querySelector('button[type="submit"]');
+      var jeton  = document.querySelector('meta[name="csrf"]').content;
 
-      document.cookie = 'perpay_role=; path=/; max-age=0';
+      function afficherErreur(message) {
+        texte.textContent = message;
+        erreur.classList.remove('d-none');
+      }
 
       form.addEventListener('submit', function (event) {
         event.preventDefault();
@@ -140,14 +146,32 @@
 
         if (!form.checkValidity()) { return; }
 
-        var compte = COMPTES[form.elements.email.value.trim().toLowerCase()];
-        if (!compte || form.elements.password.value !== MOT_DE_PASSE_DEMO) {
-          erreur.classList.remove('d-none');
-          return;
-        }
+        bouton.disabled = true;
 
-        document.cookie = 'perpay_role=' + compte[0] + '; path=/; SameSite=Lax';
-        window.location.href = compte[1];
+        fetch('../api/login.php', {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': jeton, 'Accept': 'application/json' },
+          body: new FormData(form),
+          credentials: 'same-origin'
+        })
+          .then(function (reponse) {
+            return reponse.json().then(
+              function (donnees) { return { ok: reponse.ok, donnees: donnees }; },
+              function () { return { ok: false, donnees: { message: 'Session expirée. Rechargez la page.' } }; }
+            );
+          })
+          .then(function (resultat) {
+            if (!resultat.ok) {
+              afficherErreur(resultat.donnees.message || 'Connexion impossible.');
+              bouton.disabled = false;
+              return;
+            }
+            window.location.href = resultat.donnees.redirection;
+          })
+          .catch(function () {
+            afficherErreur('Serveur injoignable. Réessayez.');
+            bouton.disabled = false;
+          });
       });
     })();
   </script>

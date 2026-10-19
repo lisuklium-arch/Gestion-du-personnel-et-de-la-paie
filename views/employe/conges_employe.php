@@ -1,3 +1,14 @@
+<?php
+require_once __DIR__ . '/../../config/init.php';
+require_once __DIR__ .'/../../models/Employe.php';
+exigerRole(['employe', 'chef', 'rh']);
+
+$moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+if ($moi === null) {
+    http_response_code(404);
+    exit('Aucun dossier employé n\'est associé à ce compte.');
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -36,7 +47,7 @@
       </header>
 
       <main class="app-content">
-        <p class="app-meta">Marie Ngo Ndjock • Année 2026 • Soldes actualisés au 9 octobre</p>
+        <p class="app-meta"><?= h($moi['prenom'] . ' ' . $moi['nom']) ?>• Année 2026 • Soldes actualisés au 9 octobre</p>
 
         <section class="app-kpis app-kpis--4" aria-label="Soldes de congés">
           <article class="card-panel kpi-card">

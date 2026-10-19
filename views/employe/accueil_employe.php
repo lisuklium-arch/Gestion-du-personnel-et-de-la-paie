@@ -1,3 +1,14 @@
+<?php
+require_once __DIR__ . '/../../config/init.php';
+require_once __DIR__ .'/../../models/Employe.php';
+exigerRole(['employe', 'chef', 'rh']);
+
+$moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+if ($moi === null) {
+    http_response_code(404);
+    exit('Aucun dossier employé n\'est associé à ce compte.');
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -25,7 +36,6 @@
   <div class="app-shell">
 
     <?php $active = 'accueil'; include __DIR__ . '/../layout/navbar.php'; ?>
-
     <div class="app-main">
 
       <header class="app-header">
@@ -35,10 +45,10 @@
 
       <main class="app-content">
 
-        <p class="app-meta">Vendredi 9 octobre 2026 • Marie Ngo Ndjock • EMP-0042 • Finance</p>
+        <p class="app-meta">Vendredi 9 octobre 2026 • <?= h($moi['prenom'] . ' ' . $moi['nom']) ?> • <?= h($moi['matricule']) ?> • <?= h($moi['departement']) ?></p>
 
         <section class="app-greeting">
-          <h2 class="app-greeting__title">Bonjour Marie</h2>
+          <h2 class="app-greeting__title">Bonjour <?= h($moi['prenom']) ?></h2>
           <p class="app-greeting__text">Retrouvez vos congés, votre dernière fiche de paie et le suivi de vos demandes.
           </p>
         </section>
