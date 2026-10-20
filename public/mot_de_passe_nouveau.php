@@ -1,8 +1,18 @@
+<?php
+require __DIR__ . '/../config/init.php';
+
+if (empty($_SESSION['reset_user_id']) || empty($_SESSION['reset_jeton'])) {
+    header('Location: mot_de_passe_oublie.php');
+    exit;
+}
+header('Cache-Control: no-store');
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf" content="<?= h(csrfToken()) ?>">
   <title>Nouveau mot de passe — PerPay</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -56,6 +66,11 @@
           </div>
 
           <div id="reset-saisie">
+            <div id="reset-erreur" class="alert alert-danger d-none" role="alert">
+              <i class="fa-solid fa-circle-exclamation mt-1" aria-hidden="true"></i>
+              <span data-erreur-texte></span>
+            </div>
+
             <p class="auth-box__intro">Choisissez un nouveau mot de passe pour votre compte.</p>
 
             <form id="reset-form" class="needs-validation" novalidate>
@@ -63,7 +78,7 @@
                 <label for="nouveau" class="form-label">Nouveau mot de passe</label>
                 <div class="input-icon">
                   <i class="fa-solid fa-lock input-icon__left" aria-hidden="true"></i>
-                  <input type="password" id="nouveau" name="nouveau" class="form-control has-action"
+                  <input type="password" id="nouveau" name="nouveau_mot_de_passe" class="form-control has-action"
                          pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" autocomplete="new-password" required>
                   <button type="button" class="input-icon__action" data-toggle-password="nouveau"
                           aria-label="Afficher le mot de passe" aria-pressed="false">
@@ -101,13 +116,6 @@
 
   <script>
     (function () {
-      var autorise = false;
-      try { autorise = sessionStorage.getItem('perpay_reset_ok') === '1'; } catch (e) {}
-      if (!autorise) {
-        window.location.replace('passworgForgotten.html');
-        return;
-      }
-
       document.querySelectorAll('[data-toggle-password]').forEach(function (bouton) {
         var champ = document.getElementById(bouton.getAttribute('data-toggle-password'));
         var icone = bouton.querySelector('i');
@@ -121,7 +129,10 @@
         });
       });
 
+      var jeton = document.querySelector('meta[name="csrf"]').content;
       var form = document.getElementById('reset-form');
+      var erreur = document.getElementById('reset-erreur');
+      var envoyer = form.querySelector('button[type="submit"]');
       var nouveau = document.getElementById('nouveau');
       var confirmation = document.getElementById('confirmation');
 
@@ -132,19 +143,43 @@
       nouveau.addEventListener('input', verifierConfirmation);
       confirmation.addEventListener('input', verifierConfirmation);
 
+      function montrerErreur(texte) {
+        erreur.querySelector('[data-erreur-texte]').textContent = texte;
+        erreur.classList.remove('d-none');
+      }
+
       form.addEventListener('submit', function (event) {
         event.preventDefault();
         verifierConfirmation();
         form.classList.add('was-validated');
+        erreur.classList.add('d-none');
 
         if (!form.checkValidity()) { return; }
 
-        try {
-          sessionStorage.removeItem('perpay_reset_ok');
-          sessionStorage.removeItem('perpay_reset_email');
-        } catch (e) {}
-        document.getElementById('reset-saisie').classList.add('d-none');
-        document.getElementById('reset-succes').classList.remove('d-none');
+        envoyer.disabled = true;
+        fetch('../api/reinitialiser_mdp.php', {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': jeton, 'Accept': 'application/json' },
+          body: new FormData(form)
+        })
+          .then(function (r) { return r.json().catch(function () { return {}; }); })
+          .then(function (d) {
+            if (d.ok) {
+              document.getElementById('reset-saisie').classList.add('d-none');
+              document.getElementById('reset-succes').classList.remove('d-none');
+              return;
+            }
+            montrerErreur(d.message || 'Une erreur est survenue.');
+            if (d.redirection) {
+              setTimeout(function () { window.location.href = d.redirection; }, 2500);
+              return;
+            }
+            envoyer.disabled = false;
+          })
+          .catch(function () {
+            montrerErreur('Serveur injoignable. Réessayez.');
+            envoyer.disabled = false;
+          });
       });
     })();
   </script>

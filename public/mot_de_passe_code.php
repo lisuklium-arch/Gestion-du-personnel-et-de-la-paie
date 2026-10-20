@@ -1,8 +1,20 @@
+<?php
+require __DIR__ . '/../config/init.php';
+
+$emailReset = $_SESSION['reset_email'] ?? '';
+if ($emailReset === '') {
+    header('Location: mot_de_passe_oublie.php');
+    exit;
+}
+$parts = explode('@', $emailReset, 2);
+$emailMasque = substr($parts[0], 0, 1) . '***@' . ($parts[1] ?? '');
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf" content="<?= h(csrfToken()) ?>">
   <title>Saisir le code — PerPay</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,8 +58,8 @@
 
         <div class="auth-box">
           <p class="auth-box__intro">
-            Un code à 6 chiffres a été envoyé à <strong id="email-masque">votre adresse e-mail</strong>.
-            Il est valable 15 minutes.
+            Un code à 6 chiffres a été envoyé à <strong id="email-masque"><?= h($emailMasque) ?></strong>.
+            Il est valable 15 minutes et ne peut servir qu’une seule fois.
           </p>
 
           <div id="code-erreur" class="alert alert-danger d-none" role="alert">
@@ -81,7 +93,7 @@
 
           <div class="auth-divider" aria-hidden="true">ou</div>
 
-          <a href="passworgForgotten.html" class="btn btn-neutral w-100 text-decoration-none">
+          <a href="mot_de_passe_oublie.php" class="btn btn-neutral w-100 text-decoration-none">
             <i class="fa-solid fa-arrow-left me-2" aria-hidden="true"></i>Changer d’adresse e-mail
           </a>
         </div>
@@ -93,22 +105,27 @@
   <script>
     (function () {
       var DELAI_RENVOI = 180;
-      var TENTATIVES_MAX = 5;
-      var tentatives = 0;
 
-      var form = document.getElementById('code-form');
-      var champ = document.getElementById('code');
-      var erreur = document.getElementById('code-erreur');
+      var jeton   = document.querySelector('meta[name="csrf"]').content;
+      var form    = document.getElementById('code-form');
+      var champ   = document.getElementById('code');
+      var erreur  = document.getElementById('code-erreur');
       var renvoye = document.getElementById('code-renvoye');
-      var bouton = document.getElementById('renvoyer');
+      var bouton  = document.getElementById('renvoyer');
       var decompte = document.getElementById('decompte');
+      var valider = form.querySelector('button[type="submit"]');
 
-      var email = '';
-      try { email = sessionStorage.getItem('perpay_reset_email') || ''; } catch (e) {}
-      if (email) {
-        var morceaux = email.split('@');
-        document.getElementById('email-masque').textContent =
-          morceaux[0].charAt(0) + '***@' + (morceaux[1] || '');
+      function montrerErreur(texte) {
+        erreur.querySelector('[data-erreur-texte]').textContent = texte;
+        erreur.classList.remove('d-none');
+      }
+
+      function appeler(url, donnees) {
+        return fetch(url, {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': jeton, 'Accept': 'application/json' },
+          body: donnees
+        }).then(function (r) { return r.json().catch(function () { return {}; }); });
       }
 
       champ.addEventListener('input', function () {
@@ -120,29 +137,25 @@
         event.preventDefault();
         form.classList.add('was-validated');
         erreur.classList.add('d-none');
-
         if (!form.checkValidity()) { return; }
 
-        if (tentatives >= TENTATIVES_MAX) {
-          erreur.querySelector('[data-erreur-texte]').textContent = 'Trop de tentatives. Demandez un nouveau code.';
-          erreur.classList.remove('d-none');
-          return;
-        }
-
-        if (champ.value !== '123456') {
-          tentatives++;
-          erreur.querySelector('[data-erreur-texte]').textContent = 'Code incorrect ou expiré.';
-          erreur.classList.remove('d-none');
-          return;
-        }
-
-        try { sessionStorage.setItem('perpay_reset_ok', '1'); } catch (e) {}
-        window.location.href = 'passwordReset.html';
+        valider.disabled = true;
+        appeler('../api/verifier_code_mdp.php', new FormData(form))
+          .then(function (d) {
+            if (d.ok || d.redirection) { window.location.href = d.redirection; return; }
+            montrerErreur(d.message || 'Code incorrect ou expiré.');
+            valider.disabled = false;
+          })
+          .catch(function () {
+            montrerErreur('Serveur injoignable. Réessayez.');
+            valider.disabled = false;
+          });
       });
 
       function lancerDecompte() {
         var reste = DELAI_RENVOI;
         bouton.disabled = true;
+        decompte.textContent = '(' + reste + ' s)';
         var minuterie = setInterval(function () {
           reste--;
           decompte.textContent = '(' + reste + ' s)';
@@ -152,14 +165,26 @@
             bouton.disabled = false;
           }
         }, 1000);
-        decompte.textContent = '(' + reste + ' s)';
       }
 
       bouton.addEventListener('click', function () {
-        tentatives = 0;
-        champ.value = '';
-        renvoye.classList.remove('d-none');
-        lancerDecompte();
+        bouton.disabled = true;
+        erreur.classList.add('d-none');
+        appeler('../api/mot_de_passe_oublie.php', new FormData())
+          .then(function (d) {
+            if (d.ok) {
+              champ.value = '';
+              renvoye.classList.remove('d-none');
+              lancerDecompte();
+            } else {
+              montrerErreur(d.message || 'Impossible de renvoyer le code.');
+              bouton.disabled = false;
+            }
+          })
+          .catch(function () {
+            montrerErreur('Serveur injoignable. Réessayez.');
+            bouton.disabled = false;
+          });
       });
 
       lancerDecompte();

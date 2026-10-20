@@ -11,6 +11,11 @@ class JournalService
         $this->journal = $journal;
     }
 
+    public function compterRecents(int $utilisateurId, string $action, int $minutes): int
+{
+    return $this->journal->compterRecents($utilisateurId, $action, $minutes);
+}
+
     public function enregistrer(
         int $utilisateurId,
         string $action,

@@ -1,8 +1,12 @@
+<?php
+require __DIR__ . '/../config/init.php';
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf" content="<?= h(csrfToken()) ?>">
   <title>Mot de passe oublié — PerPay</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,6 +56,11 @@
             à 6 chiffres pour choisir un nouveau mot de passe.
           </p>
 
+          <div id="oubli-erreur" class="alert alert-danger d-none" role="alert">
+            <i class="fa-solid fa-circle-exclamation mt-1" aria-hidden="true"></i>
+            <span data-erreur-texte></span>
+          </div>
+
           <form id="reset-form" class="needs-validation" novalidate>
             <div class="mb-3">
               <label for="email" class="form-label">E-mail professionnel</label>
@@ -81,16 +90,35 @@
 
   <script>
     (function () {
-      var form = document.getElementById('reset-form');
+      var jeton   = document.querySelector('meta[name="csrf"]').content;
+      var form    = document.getElementById('reset-form');
+      var erreur  = document.getElementById('oubli-erreur');
+      var bouton  = form.querySelector('button[type="submit"]');
 
       form.addEventListener('submit', function (event) {
         event.preventDefault();
         form.classList.add('was-validated');
+        erreur.classList.add('d-none');
+        if (!form.checkValidity()) { return; }
 
-        if (form.checkValidity()) {
-          try { sessionStorage.setItem('perpay_reset_email', form.elements.email.value.trim()); } catch (e) {}
-          window.location.href = 'passwordCode.html';
-        }
+        bouton.disabled = true;
+        fetch('../api/mot_de_passe_oublie.php', {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': jeton, 'Accept': 'application/json' },
+          body: new FormData(form)
+        })
+          .then(function (r) { return r.json().catch(function () { return {}; }); })
+          .then(function (d) {
+            if (d.ok) { window.location.href = 'mot_de_passe_code.php'; return; }
+            erreur.querySelector('[data-erreur-texte]').textContent = d.message || 'Une erreur est survenue.';
+            erreur.classList.remove('d-none');
+            bouton.disabled = false;
+          })
+          .catch(function () {
+            erreur.querySelector('[data-erreur-texte]').textContent = 'Serveur injoignable. Réessayez.';
+            erreur.classList.remove('d-none');
+            bouton.disabled = false;
+          });
       });
     })();
   </script>

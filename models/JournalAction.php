@@ -9,7 +9,8 @@ class JournalAction
         $this->pdo = $pdo;
     }
 
-    // Journal append-only : INSERT uniquement, jamais d'UPDATE ni de DELETE.
+   
+
     public function inserer(
         int $utilisateurId,
         string $action,
@@ -27,12 +28,26 @@ class JournalAction
         );
         $stmt->execute([
             ':utilisateur_id' => $utilisateurId,
-            ':action'         => $action,
-            ':entite'         => $entite,
-            ':entite_id'      => $entiteId,
-            ':ancienne'       => $ancienne,
-            ':nouvelle'       => $nouvelle,
-            ':ip'             => $ip,
+            ':action' => $action,
+            ':entite' => $entite,
+            ':entite_id' => $entiteId,
+            ':ancienne' => $ancienne,
+            ':nouvelle' => $nouvelle,
+            ':ip' => $ip,
         ]);
+    }
+
+    public function compterRecents(int $utilisateurId, string $action, int $minutes): int
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM journal_action
+             WHERE utilisateur_id = :id AND action = :action
+               AND date_heure > DATE_SUB(NOW(), INTERVAL :minutes MINUTE)'
+        );
+        $stmt->bindValue(':id', $utilisateurId, PDO::PARAM_INT);
+        $stmt->bindValue(':action', $action);
+        $stmt->bindValue(':minutes', $minutes, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int) $stmt->fetchColumn();
     }
 }

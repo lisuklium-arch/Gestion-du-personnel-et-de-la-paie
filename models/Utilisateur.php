@@ -29,4 +29,12 @@ class Utilisateur
         $stmt = $this->pdo->prepare('UPDATE utilisateur SET derniere_connexion = NOW() WHERE id = :id');
         return $stmt->execute(['id' => $id]);
     }
+
+    public function majMotDePasse(int $id, string $hash): bool
+{
+    $stmt = $this->pdo->prepare(
+        'UPDATE utilisateur SET mot_de_passe_hash = :hash, doit_changer_mdp = 0 WHERE id = :id'
+    );
+    return $stmt->execute([':hash' => $hash, ':id' => $id]);
+}
 }

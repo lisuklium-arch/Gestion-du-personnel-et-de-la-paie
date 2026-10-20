@@ -12,5 +12,14 @@ return [
         'name' => 'Perpay',
         'debug' => true,
         'timezone' => 'Africa/Douala'
-    ]
+    ],
+    'mail' => [
+        'host' => 'smtp.gmail.com',   
+        'port' => 587,                          
+        'user' => 'doudyx1@gmail.com',
+        'pass' => 'arhh lhpb jouj gvjp',
+        'chiffrement' => 'tls',
+        'expediteur_email' => 'doudyx1@gmail.com',
+        'expediteur_nom' => 'PerPay',
+    ],
 ];

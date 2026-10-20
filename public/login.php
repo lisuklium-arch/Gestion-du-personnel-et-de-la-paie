@@ -3,12 +3,13 @@ require __DIR__ . '/../config/init.php';
 
 // Déjà connecté : inutile d'afficher le formulaire
 if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
-    header('Location: ' . accueilPourRoleCourant());
-    exit;
+  header('Location: ' . accueilPourRoleCourant());
+  exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -28,6 +29,7 @@ if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
+
 <body>
 
   <div class="auth-layout">
@@ -67,8 +69,8 @@ if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
             <label for="email" class="form-label">Adresse e-mail</label>
             <div class="input-icon">
               <i class="fa-regular fa-envelope input-icon__left" aria-hidden="true"></i>
-              <input type="email" id="email" name="email" class="form-control"
-                     placeholder="exemple@domaine.fr" autocomplete="username" required>
+              <input type="email" id="email" name="email" class="form-control" placeholder="exemple@domaine.fr"
+                autocomplete="username" required>
               <div class="invalid-feedback">Saisissez un e-mail professionnel valide.</div>
             </div>
           </div>
@@ -78,9 +80,9 @@ if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
             <div class="input-icon">
               <i class="fa-solid fa-lock input-icon__left" aria-hidden="true"></i>
               <input type="password" id="password" name="password" class="form-control has-action"
-                     placeholder="Votre mot de passe" autocomplete="current-password" required>
+                placeholder="Votre mot de passe" autocomplete="current-password" required>
               <button type="button" class="input-icon__action" id="toggle-password"
-                      aria-label="Afficher le mot de passe" aria-pressed="false">
+                aria-label="Afficher le mot de passe" aria-pressed="false">
                 <i class="fa-regular fa-eye" aria-hidden="true"></i>
               </button>
               <div class="invalid-feedback">Saisissez votre mot de passe.</div>
@@ -92,7 +94,7 @@ if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
               <input class="form-check-input" type="checkbox" id="remember" name="remember">
               <label class="form-check-label text-muted" for="remember">Se souvenir de moi</label>
             </div>
-            <a href="passworgForgotten.html">Mot de passe oublié ?</a>
+            <a href="mot_de_passe_oublie.php">Mot de passe oublié ?</a>
           </div>
 
           <button type="submit" class="btn btn-primary btn-submit">
@@ -114,9 +116,9 @@ if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
 
   <script>
     (function () {
-      var input  = document.getElementById('password');
+      var input = document.getElementById('password');
       var button = document.getElementById('toggle-password');
-      var icon   = button.querySelector('i');
+      var icon = button.querySelector('i');
 
       button.addEventListener('click', function () {
         var visible = input.type === 'text';
@@ -128,11 +130,11 @@ if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
     })();
 
     (function () {
-      var form   = document.getElementById('login-form');
+      var form = document.getElementById('login-form');
       var erreur = document.getElementById('login-error');
-      var texte  = erreur.querySelector('span');
+      var texte = erreur.querySelector('span');
       var bouton = form.querySelector('button[type="submit"]');
-      var jeton  = document.querySelector('meta[name="csrf"]').content;
+      var jeton = document.querySelector('meta[name="csrf"]').content;
 
       function afficherErreur(message) {
         texte.textContent = message;
@@ -176,4 +178,5 @@ if (utilisateurConnecte() && accueilPourRoleCourant() !== null) {
     })();
   </script>
 </body>
+
 </html>
