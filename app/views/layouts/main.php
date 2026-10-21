@@ -28,10 +28,12 @@ $actif = request_path();
                 <?php foreach ($menu as $section): ?>
                     <div class="menu-title"><?= e($section['titre']) ?></div>
                     <ul class="nav flex-column gap-1">
-                        <?php foreach ($section['items'] as [$libelle, $chemin, $pret]): ?>
+                        <?php foreach ($section['items'] as [$libelle, $chemin, $pret]):
+                            // actif sur la page elle-même et sur ses sous-pages (sauf pour les accueils à 1 niveau)
+                            $estActif = $actif === $chemin || (substr_count($chemin, '/') >= 2 && str_starts_with($actif, $chemin . '/')); ?>
                             <li class="nav-item">
                                 <?php if ($pret): ?>
-                                    <a class="nav-link<?= $actif === $chemin ? ' active' : '' ?>" href="<?= e(url($chemin)) ?>"<?= $actif === $chemin ? ' aria-current="page"' : '' ?>><?= e($libelle) ?></a>
+                                    <a class="nav-link<?= $estActif ? ' active' : '' ?>" href="<?= e(url($chemin)) ?>"<?= $estActif ? ' aria-current="page"' : '' ?>><?= e($libelle) ?></a>
                                 <?php else: ?>
                                     <span class="nav-link disabled" aria-disabled="true"><?= e($libelle) ?> <span class="badge text-bg-secondary ms-auto">bientôt</span></span>
                                 <?php endif; ?>
@@ -66,5 +68,8 @@ $actif = request_path();
 </div>
 <script src="<?= e(asset('vendor/bootstrap/js/bootstrap.bundle.min.js')) ?>"></script>
 <script src="<?= e(asset('js/app.js')) ?>"></script>
+<?php foreach (($scripts ?? []) as $script): ?>
+<script src="<?= e(asset($script)) ?>"></script>
+<?php endforeach; ?>
 </body>
 </html>

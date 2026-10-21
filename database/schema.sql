@@ -1,6 +1,4 @@
-
-DROP DATABASE IF EXISTS personnel_paie;
-CREATE DATABASE personnel_paie CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS personnel_paie CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE personnel_paie;
 
 CREATE TABLE utilisateur (

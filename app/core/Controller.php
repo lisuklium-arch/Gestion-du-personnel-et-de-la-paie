@@ -20,4 +20,17 @@ abstract class Controller
         $content = ob_get_clean();
         require APP_PATH . '/views/layouts/' . $miseEnPage . '.php';
     }
+
+    /** Valeur de formulaire sous forme de texte (ignore les « tableaux » envoyés par un pirate). */
+    protected function saisie(mixed $v): string
+    {
+        return is_string($v) ? trim($v) : '';
+    }
+
+    /** Date AAAA-MM-JJ valide, ou null. */
+    protected function dateIso(string $s): ?string
+    {
+        $d = \DateTime::createFromFormat('!Y-m-d', $s);
+        return ($d && $d->format('Y-m-d') === $s) ? $s : null;
+    }
 }

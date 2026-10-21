@@ -3,3 +3,15 @@ storage/logs/*
 storage/documents/*
 !storage/logs/.gitkeep
 !storage/documents/.gitkeep
+config/config.php
+vendor/
+uploads/
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+storage/*
+!storage/*/
+storage/*/*
+!storage/*/.gitkeep

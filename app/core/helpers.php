@@ -93,3 +93,51 @@ function csrf_field(): string
 {
     return \App\Core\Csrf::field();
 }
+
+function date_fr(?string $date): string
+{
+    $t = $date ? strtotime($date) : false;
+    return $t ? date('d/m/Y', $t) : '—';
+}
+
+function montant(mixed $valeur): string
+{
+    return ($valeur === null || $valeur === '') ? '—' : number_format((float) $valeur, 0, ',', "\u{00A0}") . "\u{00A0}FCFA";
+}
+
+function statut_employe(string $code): array   // [libellé, classe Bootstrap]
+{
+    return [
+        'ACTIF'    => ['Actif', 'text-bg-success'],
+        'EN_CONGE' => ['En congé', 'text-bg-warning'],
+        'SUSPENDU' => ['Suspendu', 'text-bg-danger'],
+        'SORTI'    => ['Sorti', 'text-bg-secondary'],
+    ][$code] ?? [$code, 'text-bg-secondary'];
+}
+
+/** Nombre décimal lisible : 30.0 => "30", 18.5 => "18,5". */
+function nombre(mixed $valeur): string
+{
+    return rtrim(rtrim(number_format((float) $valeur, 1, ',', ''), '0'), ',');
+}
+
+/** Champ de formulaire Bootstrap (texte, date, e-mail…) avec son message d'erreur. */
+function form_champ(string $k, string $label, array $v, array $err, string $type = 'text', string $attrs = '', string $col = 'col-12 col-md-6'): string
+{
+    $mauvais = isset($err[$k]);
+    return '<div class="' . $col . '"><label for="' . $k . '" class="form-label fw-semibold">' . e($label) . '</label>'
+         . '<input type="' . $type . '" class="form-control' . ($mauvais ? ' is-invalid' : '') . '" id="' . $k . '" name="' . $k . '" value="' . e($v[$k] ?? '') . '" ' . $attrs . '>'
+         . ($mauvais ? '<div class="invalid-feedback">' . e($err[$k]) . '</div>' : '') . '</div>';
+}
+
+/** Liste déroulante : $options = [valeur => libellé]. */
+function form_liste(string $k, string $label, array $options, array $v, array $err, string $vide = 'Choisir…', string $col = 'col-12 col-md-6'): string
+{
+    $mauvais = isset($err[$k]);
+    $h = '<div class="' . $col . '"><label for="' . $k . '" class="form-label fw-semibold">' . e($label) . '</label><select class="form-select' . ($mauvais ? ' is-invalid' : '') . '" id="' . $k . '" name="' . $k . '">';
+    if ($vide !== '') { $h .= '<option value="">' . e($vide) . '</option>'; }
+    foreach ($options as $valeur => $libelle) {
+        $h .= '<option value="' . e($valeur) . '"' . ((string) ($v[$k] ?? '') === (string) $valeur ? ' selected' : '') . '>' . e($libelle) . '</option>';
+    }
+    return $h . '</select>' . ($mauvais ? '<div class="invalid-feedback">' . e($err[$k]) . '</div>' : '') . '</div>';
+}

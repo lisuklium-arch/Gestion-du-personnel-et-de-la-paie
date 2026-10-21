@@ -1,7 +1,7 @@
 # Gestion du personnel et de la paie — Projet 8
 
 Application web PHP 8 / MySQL (MariaDB) / Bootstrap 5, architecture MVC.
-**Avancement : étape 1 (base de données) et étape 2 (socle MVC, sécurité, connexion par profil).**
+**Avancement : étape 1 (base de données), étape 2 (socle MVC, sécurité, connexion par profil) et étape 3 (employés : recherche instantanée AJAX, création, dossier, modification) et étape 4 (départements avec désignation du chef, postes, contrats).**
 
 ## Prérequis
 - PHP **8.1 ou plus** (`php -v`) avec les extensions `mysql` et `mbstring`

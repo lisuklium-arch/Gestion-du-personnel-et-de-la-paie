@@ -25,8 +25,8 @@ return [
     'RESPONSABLE_RH' => [
         ['titre' => 'Gestion RH', 'items' => [
             ['Tableau de bord',        '/rh',              true],
-            ['Employés',               '/rh/employes',     false],
-            ['Départements et postes', '/rh/organisation', false],
+            ['Employés',               '/rh/employes',     true],
+            ['Départements et postes', '/rh/organisation', true],
             ['Congés',                 '/rh/conges',       false],
             ['Heures supp.',           '/rh/heures-supp',  false],
             ['Paie',                   '/rh/paie',         false],

@@ -1,0 +1,141 @@
+.org-root__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.org-root__who {
+  min-width: 0;
+}
+
+.org-root__tag {
+  margin-left: auto;
+}
+
+.org-connector {
+  width: 2px;
+  height: var(--space-4);
+  margin: 0 auto;
+  background-color: var(--color-border-strong);
+}
+
+.org-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.org-divider::before,
+.org-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.org-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .org-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .org-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.org-dept {
+  padding: var(--space-3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.org-dept__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.org-dept__name {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.org-dept__count {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.org-chief {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2);
+  background-color: var(--color-info-bg);
+  border-radius: var(--radius);
+}
+
+.org-chief__name {
+  margin: 0;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+.org-members {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) 0 0;
+  list-style: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.org-member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.org-member__name {
+  margin: 0;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+}
+
+.org-member__role {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.org-dept__foot {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.org-footnote {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}

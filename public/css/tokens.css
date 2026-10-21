@@ -1,0 +1,78 @@
+:root {
+  --color-primary:        #157347;
+  --color-primary-hover:  #11603B;
+  --color-primary-dark:   #0E5233;
+  --color-primary-rgb:    21, 115, 71;
+  --color-on-primary:     #FFFFFF;
+  --color-accent-on-dark: #6EE7A8;
+  --gradient-brand: linear-gradient(160deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  --color-overlay-on-dark: rgba(255, 255, 255, 0.12);
+  --color-border-on-dark:  rgba(255, 255, 255, 0.18);
+
+  --color-success:        #237447;
+  --color-success-bg:     #EAF5EE;
+  --color-warning:        #A85C08;
+  --color-warning-bg:     #FFF3E3;
+  --color-danger:         #B52E32;
+  --color-danger-bg:      #FDEDEE;
+  --color-info:           #606B7A;
+  --color-info-bg:        #F4F7F6;
+
+  --color-text:           #202938;
+  --color-text-muted:     #606B7A;
+  --color-text-on-dark:   #FFFFFF;
+  --color-text-on-dark-muted: rgba(255, 255, 255, 0.78);
+
+  --color-bg:             #F4F7F6;
+  --color-surface:        #FFFFFF;
+  --color-nav:            #EAF4F0;
+  --color-border:         #DCE1E7;
+  --color-border-strong:  #C3CBD4;
+
+  --font-family-base: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+                      "Helvetica Neue", Arial, sans-serif;
+
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  --font-size-page-title:    1.75rem;
+  --font-size-title-mobile:  1.375rem;
+  --font-size-section-title: 1.25rem;
+  --font-size-body:          1rem;
+  --font-size-label:         0.875rem;
+  --font-size-meta:          0.875rem;
+  --font-size-kpi:           1.75rem;
+
+  --line-height-tight: 1.25;
+  --line-height-base:  1.5;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+
+  --radius:        8px;
+  --radius-pill:   999px;
+  --touch-target:  44px;
+  --form-max-width: 600px;
+  --auth-card-width: 400px;
+  --sidebar-width: 240px;
+  --header-height: 72px;
+  --bottom-bar-height: 64px;
+  --table-max-height: 320px;
+  --aside-width: 320px;
+  --page-gutter-mobile:  16px;
+  --page-gutter-desktop: 32px;
+
+  --shadow-sm:  0 1px 2px rgba(32, 41, 56, 0.06);
+  --shadow-btn: 0 4px 12px rgba(var(--color-primary-rgb), 0.25);
+  --focus-ring: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+
+  --transition-base: 150ms ease-in-out;
+
+  --bp-mobile:  390px;
+  --bp-desktop: 1280px;
+}
