@@ -6,7 +6,7 @@ require_once __DIR__ . '/donnees_demo_rh.php';
 $espace = 'rh';
 $active = 'rh_compte';
 $pageTitle = 'Création de compte';
-$sousTitre = 'Nouveau dossier employé et compte de connexion • Formulaire non encore enregistré';
+$sousTitre = 'Nouveau dossier employé et compte de connexion';
 $scripts = ['forms.js', 'gestion.js'];
 
 $modeCompte = 'rh';

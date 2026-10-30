@@ -4,32 +4,36 @@ require_once __DIR__ . '/../models/Utilisateur.php';
 require_once __DIR__ . '/../models/JetonReinitialisation.php';
 require_once __DIR__ . '/MailService.php';
 require_once __DIR__ . '/JournalService.php';
+require_once __DIR__ . '/NotificationService.php';
 
 class MotDePasseService
 {
-    private const VALIDITE_MINUTES      = 15;
+    private const VALIDITE_MINUTES = 15;
     private const DELAI_RENVOI_SECONDES = 180;
-    private const ESSAIS_MAX            = 5;
-    private const FENETRE_ESSAIS_MIN    = 10;
-    private const MDP_LONGUEUR_MIN      = 8;
+    private const ESSAIS_MAX = 5;
+    private const FENETRE_ESSAIS_MIN = 10;
+    private const MDP_LONGUEUR_MIN = 8;
 
     private const MESSAGE_NEUTRE = "Si ce compte existe, un code de vérification vient d'être envoyé. "
-                                 . "Vous pourrez en demander un nouveau dans 3 minutes.";
+        . "Vous pourrez en demander un nouveau dans 3 minutes.";
 
     private Utilisateur $utilisateurs;
     private JetonReinitialisation $jetons;
     private MailService $mailService;
     private JournalService $journalService;
+    private ?NotificationService $notifications;
 
     public function __construct(
         Utilisateur $utilisateurs,
         JetonReinitialisation $jetons,
         MailService $mailService,
-        JournalService $journalService
+        JournalService $journalService,
+        ?NotificationService $notifications = null
     ) {
-        $this->utilisateurs   = $utilisateurs;
-        $this->jetons         = $jetons;
-        $this->mailService    = $mailService;
+        $this->notifications = $notifications;
+        $this->utilisateurs = $utilisateurs;
+        $this->jetons = $jetons;
+        $this->mailService = $mailService;
         $this->journalService = $journalService;
     }
 
@@ -90,14 +94,9 @@ class MotDePasseService
 
     public function changerMotDePasse(int $utilisateurId, string $jeton, string $nouveau, string $confirmation): array
     {
-        if (strlen($nouveau) < self::MDP_LONGUEUR_MIN
-            || !preg_match('/[A-Za-z]/', $nouveau)
-            || !preg_match('/[0-9]/', $nouveau)) {
-            return ['ok' => false, 'message' => 'Le mot de passe doit contenir au moins ' . self::MDP_LONGUEUR_MIN
-                . ' caractères, avec au moins une lettre et un chiffre.'];
-        }
-        if ($nouveau !== $confirmation) {
-            return ['ok' => false, 'message' => 'Les deux mots de passe ne correspondent pas.'];
+        $erreur = $this->erreurNouveauMotDePasse($nouveau, $confirmation);
+        if ($erreur !== null) {
+            return ['ok' => false, 'message' => $erreur];
         }
 
         if (!$this->jetons->consommer($utilisateurId, $jeton)) {
@@ -107,8 +106,65 @@ class MotDePasseService
         $this->utilisateurs->majMotDePasse($utilisateurId, password_hash($nouveau, PASSWORD_DEFAULT));
         $this->jetons->invaliderActifs($utilisateurId);
         $this->journalService->enregistrer($utilisateurId, 'mdp_reinitialise', 'utilisateur', $utilisateurId);
+        $this->alerterChangement($utilisateurId);
 
         return ['ok' => true, 'message' => 'Votre mot de passe a été modifié. Vous pouvez vous connecter.'];
+    }
+
+    public function changerMotDePasseTemporaire(int $utilisateurId, string $actuel, string $nouveau, string $confirmation): array
+    {
+        $echecs = $this->journalService->compterRecents($utilisateurId, 'echec_mdp_actuel', self::FENETRE_ESSAIS_MIN);
+        if ($echecs >= self::ESSAIS_MAX) {
+            return ['ok' => false, 'message' => 'Trop de tentatives. Réessayez dans ' . self::FENETRE_ESSAIS_MIN . ' minutes.'];
+        }
+
+        $user = $this->utilisateurs->trouverParId($utilisateurId);
+        if ($user === null || $user['statut_compte'] !== 'actif') {
+            return ['ok' => false, 'message' => 'Compte introuvable.'];
+        }
+
+        if (!password_verify($actuel, $user['mot_de_passe_hash'])) {
+            $this->journalService->enregistrer($utilisateurId, 'echec_mdp_actuel', 'utilisateur', $utilisateurId);
+            return ['ok' => false, 'message' => 'Le mot de passe actuel est incorrect.'];
+        }
+
+        $erreur = $this->erreurNouveauMotDePasse($nouveau, $confirmation);
+        if ($erreur !== null) {
+            return ['ok' => false, 'message' => $erreur];
+        }
+        if ($nouveau === $actuel) {
+            return ['ok' => false, 'message' => "Le nouveau mot de passe doit être différent du mot de passe temporaire."];
+        }
+
+        $this->utilisateurs->majMotDePasse($utilisateurId, password_hash($nouveau, PASSWORD_DEFAULT));
+        $this->journalService->enregistrer($utilisateurId, 'mdp_temporaire_change', 'utilisateur', $utilisateurId);
+        $this->alerterChangement($utilisateurId);
+
+        return ['ok' => true, 'message' => 'Votre mot de passe a été enregistré.'];
+    }
+
+    private function alerterChangement(int $utilisateurId): void
+    {
+        if ($this->notifications !== null) {
+            $this->notifications->notifier($utilisateurId, 'securite', 'Mot de passe modifié',
+                "Votre mot de passe vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, contactez les ressources humaines.");
+        }
+    }
+
+    private function erreurNouveauMotDePasse(string $nouveau, string $confirmation): ?string
+    {
+        if (
+            strlen($nouveau) < self::MDP_LONGUEUR_MIN
+            || !preg_match('/[A-Za-z]/', $nouveau)
+            || !preg_match('/[0-9]/', $nouveau)
+        ) {
+            return 'Le mot de passe doit contenir au moins ' . self::MDP_LONGUEUR_MIN
+                . ' caractères, avec au moins une lettre et un chiffre.';
+        }
+        if ($nouveau !== $confirmation) {
+            return 'Les deux mots de passe ne correspondent pas.';
+        }
+        return null;
     }
 
     private function hasherCode(int $utilisateurId, string $code): string

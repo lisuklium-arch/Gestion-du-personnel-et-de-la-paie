@@ -29,6 +29,7 @@ if ($moi === null) {
   <link rel="stylesheet" href="/public/css/components.css">
   <link rel="stylesheet" href="/public/css/layout.css">
   <link rel="stylesheet" href="/public/css/organigramme.css">
+  <?php include __DIR__ . '/../layout/head_notifications.php'; ?>
 </head>
 <body>
 
@@ -43,9 +44,7 @@ if ($moi === null) {
           <h1 class="app-header__title">Organigramme</h1>
           <p class="app-header__sub">Structure de l’entreprise • 48 employés actifs • 4 départements</p>
         </div>
-        <button type="button" class="icon-btn" aria-label="Notifications">
-          <i class="fa-regular fa-bell" aria-hidden="true"></i>
-        </button>
+        <?php include __DIR__ . '/../layout/cloche.php'; ?>
       </header>
 
       <main class="app-content">

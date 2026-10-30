@@ -1,5 +1,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf" content="<?= h(csrfToken()) ?>">
 <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?> — PerPay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,3 +12,6 @@
 <link rel="stylesheet" href="/public/css/components.css">
 <link rel="stylesheet" href="/public/css/layout.css">
 <link rel="stylesheet" href="/public/css/cd.css">
+<link rel="stylesheet" href="/public/css/notifications.css">
+<script src="/public/js/notifications.js" defer></script>
+<script src="/public/js/deconnexion.js" defer></script>

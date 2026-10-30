@@ -1,30 +1,30 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
 exigerRole(['dg']);
-require_once __DIR__ . '/donnees_demo_dg.php';
+require_once __DIR__ . '/../gestion/aides_journal.php';
 
 $espace = 'dg';
 $active = 'dg_journal';
 $pageTitle = 'Journal';
-$sousTitre = 'Journal de supervision • Comptes RH et décisions sur leurs congés';
+$sousTitre = 'Journal de supervision • Comptes RH, congés RH et sécurité';
 $scripts = ['gestion.js'];
 
-$du = (string) ($_GET['du'] ?? '2026-09-01');
-$au = (string) ($_GET['au'] ?? '2026-10-09');
+$aujourdhui = new DateTime('today');
+$du = dateValide((string) ($_GET['du'] ?? ''), (clone $aujourdhui)->modify('-30 days')->format('Y-m-d'));
+$au = dateValide((string) ($_GET['au'] ?? ''), $aujourdhui->format('Y-m-d'));
 $auteurChoisi = (string) ($_GET['auteur'] ?? '');
 $typeChoisi = (string) ($_GET['type'] ?? '');
-
-$typesEvenement = ['' => 'Comptes RH et congés RH', 'compte' => 'Comptes RH', 'conge' => 'Congés RH'];
-if (!isset($typesEvenement[$typeChoisi])) {
+if (!isset(JournalService::TYPES_DG[$typeChoisi])) {
     $typeChoisi = '';
 }
 
-$entrees = array_filter($journalDg, fn($l) => substr($l['date'], 0, 10) >= $du
-    && substr($l['date'], 0, 10) <= $au
-    && ($auteurChoisi === '' || $l['auteur'] === $auteurChoisi)
-    && ($typeChoisi === '' || $l['type'] === $typeChoisi));
-
-$auteurs = array_unique(array_column($journalDg, 'auteur'));
+$lecture = (new JournalService(new JournalAction($pdo)))->lire('dg', [
+    'du' => $du, 'au' => $au, 'type' => $typeChoisi,
+    'auteur_id' => ctype_digit($auteurChoisi) ? (int) $auteurChoisi : 0,
+    'page' => (int) ($_GET['page'] ?? 1),
+]);
+$entrees = $lecture['lignes'];
+$typesEvenement = JournalService::TYPES_DG;
 
 include __DIR__ . '/../layout/debut_page.php';
 ?>
@@ -46,7 +46,7 @@ include __DIR__ . '/../layout/debut_page.php';
             <div class="filter-bar__field">
               <label for="jd-auteur" class="form-label">Auteur</label>
               <select id="jd-auteur" name="auteur" class="form-select" data-autosubmit>
-                <?= optionsSelect(['' => 'Tous les auteurs de supervision'] + array_combine($auteurs, $auteurs), $auteurChoisi) ?>
+                <?= optionsAuteurs($lecture['auteurs'], $auteurChoisi, 'Tous les auteurs') ?>
               </select>
             </div>
             <div class="filter-bar__field">
@@ -80,10 +80,11 @@ include __DIR__ . '/../layout/debut_page.php';
                 <tbody>
                   <?php foreach ($entrees as $l): ?>
                   <tr>
-                    <td data-label="Horodatage"><?= h(dateHeureJournal($l['date'])) ?></td>
-                    <td data-label="Auteur"><?= h($l['auteur']) ?></td>
-                    <td data-label="Action"><?= badge($l['action'], $l['ton'], false) ?></td>
-                    <td data-label="Cible"><?= h($l['cible']) ?></td>
+                    <?php [$libelleAction, $tonAction] = actionJournal($l['action']); ?>
+                    <td data-label="Horodatage"><?= h(dateHeureJournal($l['date_heure'])) ?></td>
+                    <td data-label="Auteur"><?= h(nomAuteurJournal($l)) ?></td>
+                    <td data-label="Action"><?= badge($libelleAction, $tonAction, false) ?></td>
+                    <td data-label="Cible"><?= h(cibleJournal($l)) ?></td>
                   </tr>
                   <?php endforeach; ?>
                 </tbody>
@@ -91,7 +92,8 @@ include __DIR__ . '/../layout/debut_page.php';
             </div>
           <?php endif; ?>
 
-          <p class="card-panel__note"><i class="fa-solid fa-lock me-1" aria-hidden="true"></i><?= count($entrees) ?> événement<?= count($entrees) > 1 ? 's' : '' ?> de supervision • Lecture seule • Ordre chronologique décroissant.</p>
+          <p class="card-panel__note"><i class="fa-solid fa-lock me-1" aria-hidden="true"></i><?= (int) $lecture['total'] ?> événement<?= $lecture['total'] > 1 ? 's' : '' ?> de supervision • Lecture seule • Ordre chronologique décroissant.</p>
+          <?php pagination($lecture); ?>
         </section>
 
         <div class="note-info" role="note">

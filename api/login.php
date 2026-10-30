@@ -42,6 +42,6 @@ if (!$resultat['ok']) {
 repondre(200, [
     'ok'               => true,
     'role'             => $resultat['role'],
-    'redirection'      => accueilPourRole($resultat['role']) ?? PAGE_CONNEXION,
+    'redirection'      => $resultat['doit_changer_mdp'] ? PAGE_CHANGEMENT_MDP : (accueilPourRole($resultat['role']) ?? PAGE_CONNEXION),
     'doit_changer_mdp' => $resultat['doit_changer_mdp'],
 ]);

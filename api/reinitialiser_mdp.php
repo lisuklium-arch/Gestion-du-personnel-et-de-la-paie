@@ -35,7 +35,8 @@ $service = new MotDePasseService(
     new Utilisateur($pdo),
     new JetonReinitialisation($pdo),
     new MailService($cfg['mail']),
-    new JournalService(new JournalAction($pdo))
+    new JournalService(new JournalAction($pdo)),
+    new NotificationService(new Notification($pdo), new Utilisateur($pdo), new MailService($cfg['mail']))
 );
 $resultat = $service->changerMotDePasse((int) $utilisateurId, $jeton, $nouveau, $confirmation);
 

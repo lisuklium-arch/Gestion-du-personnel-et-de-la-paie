@@ -34,7 +34,8 @@ class Notification
     public function listerPourUtilisateur(int $utilisateurId, int $limite = 20): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, type, titre, message, lien, lue, date_creation
+            'SELECT id, type, titre, message, lien, lue, date_creation,
+                    TIMESTAMPDIFF(SECOND, date_creation, NOW()) AS depuis_secondes
              FROM notification
              WHERE utilisateur_id = :id
              ORDER BY date_creation DESC, id DESC

@@ -22,6 +22,7 @@ exigerRole(['employe', 'chef', 'rh']);
   <link rel="stylesheet" href="/public/css/base.css">
   <link rel="stylesheet" href="/public/css/components.css">
   <link rel="stylesheet" href="/public/css/layout.css">
+  <?php include __DIR__ . '/../layout/head_notifications.php'; ?>
 </head>
 
 <body>
@@ -38,9 +39,7 @@ exigerRole(['employe', 'chef', 'rh']);
           <h1 class="app-header__title">Demander une modification</h1>
           <p class="app-header__sub"><a href="profil_employe.php">Profil</a> · Mise à jour du dossier personnel</p>
         </div>
-        <button type="button" class="icon-btn" aria-label="Notifications">
-          <i class="fa-regular fa-bell" aria-hidden="true"></i>
-        </button>
+        <?php include __DIR__ . '/../layout/cloche.php'; ?>
       </header>
 
       <main class="app-content">
