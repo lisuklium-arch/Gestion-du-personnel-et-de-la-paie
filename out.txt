@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Personnel et paie</title>
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body>
+<main class="auth-wrap">
+    <div class="auth-card">
+                <div class="text-center mb-4">
+    <div class="logo-mark mb-3" aria-hidden="true">PP</div>
+    <h1 class="h3 fw-bold">Gestion du personnel et de la paie</h1>
+    <p class="text-secondary mb-0">Connectez-vous avec votre compte professionnel.</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+                <form method="post" action="/login" novalidate>
+            <input type="hidden" name="_csrf" value="722363af01de73a604d92aa2af1a01a6462da2822ae56781161cb4485ee36287">            <div class="mb-3">
+                <label for="email" class="form-label fw-semibold">Adresse e-mail</label>
+                <input type="email" class="form-control" id="email" name="email" value=""
+                       autocomplete="username" required maxlength="150" autofocus>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label fw-semibold">Mot de passe</label>
+                <input type="password" class="form-control" id="password" name="password"
+                       autocomplete="current-password" required maxlength="200">
+            </div>
+            <p class="small text-secondary">Mot de passe oublié ? Cette fonction sera ajoutée dans une prochaine étape.</p>
+            <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+        </form>
+    </div>
+</div>
+<p class="small text-secondary text-center mt-3">Accès réservé au personnel de l'organisation. Les profils sont attribués par les RH.</p>
+    </div>
+</main>
+</body>
+</html>

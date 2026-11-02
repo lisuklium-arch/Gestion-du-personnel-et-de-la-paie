@@ -48,7 +48,7 @@ CREATE TABLE employe (
   adresse         VARCHAR(255) NULL,
   photo           VARCHAR(255) NULL,
   date_embauche   DATE NOT NULL,
-  statut          ENUM('ACTIF','EN_CONGE','SUSPENDU','SORTI') NOT NULL DEFAULT 'ACTIF',
+  statut          ENUM('ACTIF','SUSPENDU','SORTI') NOT NULL DEFAULT 'ACTIF',
   PRIMARY KEY (id_employe),
   UNIQUE KEY uq_employe_matricule (matricule),
   UNIQUE KEY uq_employe_utilisateur (id_utilisateur),               
@@ -85,12 +85,25 @@ CREATE TABLE contrat (
 
 CREATE TABLE type_conge (
   id_type_conge       INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  code                VARCHAR(30) NOT NULL,
   libelle             VARCHAR(80) NOT NULL,
   jours_par_an        DECIMAL(5,1) NOT NULL DEFAULT 0,
   remunere            TINYINT(1) NOT NULL DEFAULT 1,
+  decompte_solde      TINYINT(1) NOT NULL DEFAULT 0,
   justificatif_requis TINYINT(1) NOT NULL DEFAULT 0,
+  actif               TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (id_type_conge),
+  UNIQUE KEY uq_type_conge_code (code),
   UNIQUE KEY uq_type_conge_libelle (libelle)
+) ENGINE=InnoDB;
+
+CREATE TABLE jour_ferie (
+  id_jour_ferie INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  date_ferie    DATE NOT NULL,
+  libelle       VARCHAR(100) NOT NULL,
+  recurrent     TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id_jour_ferie),
+  UNIQUE KEY uq_jour_ferie_date (date_ferie)
 ) ENGINE=InnoDB;
 
 CREATE TABLE solde_conge (
@@ -98,13 +111,10 @@ CREATE TABLE solde_conge (
   id_employe     INT UNSIGNED NOT NULL,
   id_type_conge  INT UNSIGNED NOT NULL,
   annee          SMALLINT UNSIGNED NOT NULL,
-  jours_acquis   DECIMAL(5,1) NOT NULL DEFAULT 0,
-  jours_pris     DECIMAL(5,1) NOT NULL DEFAULT 0,
   PRIMARY KEY (id_solde),
   UNIQUE KEY uq_solde (id_employe, id_type_conge, annee),
   CONSTRAINT fk_solde_employe FOREIGN KEY (id_employe)    REFERENCES employe (id_employe),
-  CONSTRAINT fk_solde_type    FOREIGN KEY (id_type_conge) REFERENCES type_conge (id_type_conge),
-  CONSTRAINT ck_solde CHECK (jours_acquis >= 0 AND jours_pris >= 0)
+  CONSTRAINT fk_solde_type    FOREIGN KEY (id_type_conge) REFERENCES type_conge (id_type_conge)
 ) ENGINE=InnoDB;
 
 CREATE TABLE demande_conge (
@@ -113,29 +123,84 @@ CREATE TABLE demande_conge (
   id_type_conge    INT UNSIGNED NOT NULL,
   date_debut       DATE NOT NULL,
   date_fin         DATE NOT NULL,
+  periode_debut    ENUM('MATIN','APRES_MIDI') NOT NULL DEFAULT 'MATIN',
+  periode_fin      ENUM('MATIN','APRES_MIDI') NOT NULL DEFAULT 'APRES_MIDI',
   nb_jours_ouvres  DECIMAL(5,1) NOT NULL,
   motif            VARCHAR(255) NULL,
   justificatif     VARCHAR(255) NULL,
-  statut           ENUM('EN_ATTENTE_AVIS','EN_ATTENTE_RH','APPROUVE','REFUSE','ANNULE') NOT NULL DEFAULT 'EN_ATTENTE_AVIS',
+  statut           ENUM('EN_ATTENTE_AVIS','EN_ATTENTE_RH','EN_ATTENTE_DG','APPROUVE','REFUSE','ANNULE') NOT NULL DEFAULT 'EN_ATTENTE_AVIS',
   date_depot       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_demande_conge),
   KEY idx_demande_employe (id_employe, date_debut),
   KEY idx_demande_statut (statut),
   CONSTRAINT fk_demande_employe FOREIGN KEY (id_employe)    REFERENCES employe (id_employe),
   CONSTRAINT fk_demande_type    FOREIGN KEY (id_type_conge) REFERENCES type_conge (id_type_conge),
-  CONSTRAINT ck_demande_dates   CHECK (date_fin >= date_debut AND nb_jours_ouvres > 0)
+  CONSTRAINT ck_demande_dates   CHECK (date_fin >= date_debut AND nb_jours_ouvres > 0),
+  CONSTRAINT ck_demande_periodes CHECK (
+    date_fin > date_debut OR NOT (periode_debut = 'APRES_MIDI' AND periode_fin = 'MATIN')
+  )
 ) ENGINE=InnoDB;
 
-CREATE TABLE presence (
-  id_presence    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  id_employe     INT UNSIGNED NOT NULL,
-  date_presence  DATE NOT NULL,
-  statut         ENUM('PRESENT','ABSENT','JUSTIFIE','RETARD') NOT NULL DEFAULT 'PRESENT',
-  motif          VARCHAR(255) NULL,
-  PRIMARY KEY (id_presence),
-  UNIQUE KEY uq_presence (id_employe, date_presence),
-  CONSTRAINT fk_presence_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe)
+-- Grand-livre du solde. Les colonnes de quantité ont disparu de solde_conge :
+-- acquis, réserve et pris sont la somme de ces lignes, qui ne se modifient pas.
+CREATE TABLE mouvement_solde_conge (
+  id_mouvement        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_solde            INT UNSIGNED NOT NULL,
+  id_demande_conge    INT UNSIGNED NULL,
+  id_utilisateur      INT UNSIGNED NULL,
+  type_mouvement      ENUM('INITIALISATION','ACQUISITION','RESERVATION','LIBERATION','APPROBATION','RESTITUTION','CORRECTION') NOT NULL,
+  delta_acquis        DECIMAL(5,1) NOT NULL DEFAULT 0,
+  delta_reserve       DECIMAL(5,1) NOT NULL DEFAULT 0,
+  delta_pris          DECIMAL(5,1) NOT NULL DEFAULT 0,
+  reference_operation VARCHAR(100) NOT NULL,
+  motif               VARCHAR(255) NOT NULL,
+  date_mouvement      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_mouvement),
+  UNIQUE KEY uq_mouvement_reference (reference_operation),
+  KEY idx_mouvement_solde_date (id_solde, date_mouvement, id_mouvement),
+  KEY idx_mouvement_demande (id_demande_conge),
+  KEY idx_mouvement_utilisateur (id_utilisateur),
+  CONSTRAINT fk_mouvement_solde FOREIGN KEY (id_solde)
+    REFERENCES solde_conge (id_solde) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_mouvement_demande FOREIGN KEY (id_demande_conge)
+    REFERENCES demande_conge (id_demande_conge) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_mouvement_utilisateur FOREIGN KEY (id_utilisateur)
+    REFERENCES utilisateur (id_utilisateur) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT ck_mouvement_non_nul CHECK (
+    delta_acquis <> 0 OR delta_reserve <> 0 OR delta_pris <> 0
+  ),
+  CONSTRAINT ck_mouvement_forme CHECK (
+    (type_mouvement = 'INITIALISATION')
+    OR (type_mouvement = 'ACQUISITION' AND delta_acquis > 0 AND delta_reserve = 0 AND delta_pris = 0)
+    OR (type_mouvement = 'RESERVATION' AND delta_acquis = 0 AND delta_reserve > 0 AND delta_pris = 0)
+    OR (type_mouvement = 'LIBERATION' AND delta_acquis = 0 AND delta_reserve < 0 AND delta_pris = 0)
+    OR (type_mouvement = 'APPROBATION' AND delta_acquis = 0 AND delta_reserve < 0 AND delta_pris = -delta_reserve)
+    OR (type_mouvement = 'RESTITUTION' AND delta_acquis = 0 AND delta_reserve = 0 AND delta_pris < 0)
+    OR (type_mouvement = 'CORRECTION')
+  )
 ) ENGINE=InnoDB;
+
+-- Une ligne seulement lorsqu'un chef marque une absence. Pas de pointage des présents.
+CREATE TABLE absence (
+  id_absence           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_employe           INT UNSIGNED NOT NULL,
+  date_absence         DATE NOT NULL,
+  motif                VARCHAR(255) NULL,
+  justifiee            TINYINT(1) NOT NULL DEFAULT 0,
+  statut_justificatif  ENUM('AUCUN','DEPOSE','ACCEPTE','REFUSE') NOT NULL DEFAULT 'AUCUN',
+  justificatif         VARCHAR(255) NULL,
+  id_demande_conge     INT UNSIGNED NULL,
+  id_auteur            INT UNSIGNED NULL,
+  date_marquage        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_absence),
+  UNIQUE KEY uq_absence (id_employe, date_absence),
+  KEY idx_absence_date (date_absence),
+  CONSTRAINT fk_absence_employe FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
+  CONSTRAINT fk_absence_demande FOREIGN KEY (id_demande_conge) REFERENCES demande_conge (id_demande_conge),
+  CONSTRAINT fk_absence_auteur FOREIGN KEY (id_auteur) REFERENCES utilisateur (id_utilisateur),
+  CONSTRAINT ck_absence_justifiee CHECK (justifiee IN (0, 1))
+) ENGINE=InnoDB;
+
 
 
 CREATE TABLE type_rubrique (
@@ -281,19 +346,19 @@ CREATE TABLE avance_salaire (
 
 CREATE TABLE validation (
   id_validation    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  id_valideur      INT UNSIGNED NOT NULL,                           
+  id_valideur      INT UNSIGNED NOT NULL,
   id_demande_conge INT UNSIGNED NULL,
   id_heure_sup     INT UNSIGNED NULL,
   id_avance        INT UNSIGNED NULL,
-  etape            ENUM('AVIS_CHEF','DECISION_RH') NOT NULL,
+  etape            ENUM('AVIS_CHEF','DECISION_RH','DECISION_DG') NOT NULL,
   decision         ENUM('APPROUVE','REFUSE') NOT NULL,
   commentaire      VARCHAR(255) NULL,
   date_validation  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_validation),
-  UNIQUE KEY uq_validation_conge (id_demande_conge, etape),         
+  UNIQUE KEY uq_validation_conge (id_demande_conge, etape),
   UNIQUE KEY uq_validation_hs    (id_heure_sup, etape),
   UNIQUE KEY uq_validation_avance (id_avance, etape),
-  CONSTRAINT fk_validation_valideur FOREIGN KEY (id_valideur)      REFERENCES employe (id_employe),
+  CONSTRAINT fk_validation_valideur FOREIGN KEY (id_valideur)      REFERENCES utilisateur (id_utilisateur),
   CONSTRAINT fk_validation_conge    FOREIGN KEY (id_demande_conge) REFERENCES demande_conge (id_demande_conge),
   CONSTRAINT fk_validation_hs       FOREIGN KEY (id_heure_sup)     REFERENCES heure_supplementaire (id_heure_sup),
   CONSTRAINT fk_validation_avance   FOREIGN KEY (id_avance)        REFERENCES avance_salaire (id_avance),
@@ -362,3 +427,20 @@ CREATE TABLE journal_action (
   KEY idx_journal_utilisateur (id_utilisateur),
   CONSTRAINT fk_journal_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES utilisateur (id_utilisateur)
 ) ENGINE=InnoDB;
+
+DELIMITER $$
+CREATE TRIGGER trg_mouvement_solde_immuable_update
+BEFORE UPDATE ON mouvement_solde_conge
+FOR EACH ROW
+BEGIN
+  SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Journal des soldes immuable : correction par contre-passation uniquement.';
+END$$
+CREATE TRIGGER trg_mouvement_solde_immuable_delete
+BEFORE DELETE ON mouvement_solde_conge
+FOR EACH ROW
+BEGIN
+  SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Journal des soldes immuable : suppression interdite.';
+END$$
+DELIMITER ;

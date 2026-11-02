@@ -68,10 +68,21 @@ INSERT INTO contrat (id_contrat, id_employe, reference, type_contrat, date_debut
   (13, 13, 'CT-0013', 'CDI', '2021-10-04', NULL, 300000, 173.33, 1),
   (14, 14, 'CT-0014', 'CDD', '2026-01-01', '2026-12-31', 200000, 173.33, 1);
 
-INSERT INTO type_conge (id_type_conge, libelle, jours_par_an, remunere, justificatif_requis) VALUES
-  (1, 'Congé annuel', 30, 1, 0),
-  (2, 'Congé maladie', 15, 1, 1),
-  (3, 'Congé sans solde', 0, 0, 0);
+INSERT INTO type_conge (id_type_conge, code, libelle, jours_par_an, remunere, decompte_solde, justificatif_requis, actif) VALUES
+  (1, 'ANNUEL', 'Congé annuel', 30, 1, 1, 0, 1),
+  (2, 'MALADIE', 'Congé maladie', 0, 1, 0, 1, 1),
+  (3, 'SANS_SOLDE', 'Congé sans solde', 0, 0, 0, 0, 1);
+
+INSERT INTO jour_ferie (date_ferie, libelle, recurrent) VALUES
+  ('2026-01-01', 'Jour de l''an', 1),
+  ('2026-02-11', 'Fête de la jeunesse', 1),
+  ('2026-04-03', 'Vendredi saint', 0),
+  ('2026-04-06', 'Lundi de Pâques', 0),
+  ('2026-05-01', 'Fête du travail', 1),
+  ('2026-05-14', 'Ascension', 0),
+  ('2026-05-20', 'Fête nationale', 1),
+  ('2026-08-15', 'Assomption', 1),
+  ('2026-12-25', 'Noël', 1);
 
 INSERT INTO type_rubrique (id_type_rubrique, code, libelle, nature, mode_calcul, valeur_par_defaut) VALUES
   (1, 'PRIME_TRANSPORT', 'Prime de transport', 'PRIME', 'MONTANT_FIXE', 20000),
@@ -104,35 +115,51 @@ INSERT INTO parametre_paie (cle, valeur, description, date_effet) VALUES
   ('MAJ_HS_DIMANCHE', '200', 'Majoration des heures supplémentaires du dimanche (%)', '2026-01-01'),
   ('TAUX_COTISATION_SOCIALE', '4.20', 'Cotisation sociale salariale (% du brut) — pédagogique', '2026-01-01');
 
-INSERT INTO demande_conge (id_demande_conge, id_employe, id_type_conge, date_debut, date_fin, nb_jours_ouvres, motif, justificatif, statut, date_depot) VALUES
-  (1, 6, 1, '2026-08-03', '2026-08-07', 5, 'Vacances', NULL, 'APPROUVE', '2026-07-20 09:00:00'),
-  (2, 6, 1, '2026-10-19', '2026-10-23', 5, 'Repos', NULL, 'EN_ATTENTE_RH', '2026-10-08 10:30:00'),
-  (3, 5, 2, '2026-10-14', '2026-10-15', 2, 'Consultation médicale', 'certificat_medical.pdf', 'EN_ATTENTE_AVIS', '2026-10-12 08:15:00'),
-  (4, 12, 1, '2026-11-02', '2026-11-13', 10, 'Voyage familial', NULL, 'EN_ATTENTE_RH', '2026-10-09 14:00:00');
+INSERT INTO demande_conge (id_demande_conge, id_employe, id_type_conge, date_debut, date_fin, periode_debut, periode_fin, nb_jours_ouvres, motif, justificatif, statut, date_depot) VALUES
+  (1, 6, 1, '2026-08-03', '2026-08-07', 'MATIN', 'APRES_MIDI', 5, 'Vacances', NULL, 'APPROUVE', '2026-07-20 09:00:00'),
+  (2, 6, 1, '2026-10-19', '2026-10-23', 'MATIN', 'APRES_MIDI', 5, 'Repos', NULL, 'EN_ATTENTE_RH', '2026-10-08 10:30:00'),
+  (3, 5, 2, '2026-10-14', '2026-10-15', 'MATIN', 'APRES_MIDI', 2, 'Consultation médicale', 'certificat_medical.pdf', 'EN_ATTENTE_AVIS', '2026-10-12 08:15:00'),
+  (4, 12, 1, '2026-11-02', '2026-11-13', 'MATIN', 'APRES_MIDI', 10, 'Voyage familial', NULL, 'EN_ATTENTE_RH', '2026-10-09 14:00:00');
 
-INSERT INTO solde_conge (id_employe, id_type_conge, annee, jours_acquis, jours_pris) VALUES
-  (1, 1, 2026, 30, 0),
-  (2, 1, 2026, 30, 0),
-  (3, 1, 2026, 30, 0),
-  (4, 1, 2026, 30, 0),
-  (5, 1, 2026, 30, 0),
-  (6, 1, 2026, 30, 5),
-  (7, 1, 2026, 30, 0),
-  (8, 1, 2026, 30, 0),
-  (9, 1, 2026, 30, 0),
-  (10, 1, 2026, 30, 0),
-  (11, 1, 2026, 30, 0),
-  (12, 1, 2026, 30, 0),
-  (13, 1, 2026, 30, 0),
-  (14, 1, 2026, 30, 0),
-  (5, 2, 2026, 15, 0);
+INSERT INTO solde_conge (id_solde, id_employe, id_type_conge, annee) VALUES
+  (1, 1, 1, 2026),
+  (2, 2, 1, 2026),
+  (3, 3, 1, 2026),
+  (4, 4, 1, 2026),
+  (5, 5, 1, 2026),
+  (6, 6, 1, 2026),
+  (7, 7, 1, 2026),
+  (8, 8, 1, 2026),
+  (9, 9, 1, 2026),
+  (10, 10, 1, 2026),
+  (11, 11, 1, 2026),
+  (12, 12, 1, 2026),
+  (13, 13, 1, 2026),
+  (14, 14, 1, 2026);
 
-INSERT INTO presence (id_employe, date_presence, statut, motif) VALUES
-  (6, '2026-10-13', 'PRESENT', NULL),
-  (5, '2026-10-13', 'JUSTIFIE', 'Rendez-vous médical'),
-  (7, '2026-10-13', 'PRESENT', NULL),
-  (8, '2026-10-13', 'RETARD', 'Retard de 20 minutes'),
-  (9, '2026-10-13', 'PRESENT', NULL);
+INSERT INTO mouvement_solde_conge (id_solde, id_demande_conge, id_utilisateur, type_mouvement, delta_acquis, delta_reserve, delta_pris, reference_operation, motif, date_mouvement) VALUES
+  (1, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:1:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (2, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:2:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (3, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:3:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (4, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:4:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (5, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:5:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (6, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:6:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (6, 1, 6, 'RESERVATION', 0, 5.0, 0, 'RES:1', 'Dépôt de la demande 1', '2026-07-20 09:00:00'),
+  (6, 1, 2, 'APPROBATION', 0, -5.0, 5.0, 'APPR:1', 'Décision RH sur la demande 1', '2026-07-22 11:00:00'),
+  (6, 2, 6, 'RESERVATION', 0, 5.0, 0, 'RES:2', 'Dépôt de la demande 2', '2026-10-08 10:30:00'),
+  (7, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:7:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (8, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:8:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (9, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:9:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (10, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:10:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (11, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:11:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (12, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:12:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (12, 4, 12, 'RESERVATION', 0, 10.0, 0, 'RES:4', 'Dépôt de la demande 4', '2026-10-09 14:00:00'),
+  (13, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:13:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00'),
+  (14, NULL, 2, 'ACQUISITION', 30.0, 0, 0, 'ACQ:14:1:2026', 'Ouverture annuelle', '2026-01-01 08:00:00');
+
+INSERT INTO absence (id_employe, date_absence, motif, justifiee, statut_justificatif, id_auteur) VALUES
+  (5, '2026-10-13', 'Rendez-vous médical', 1, 'ACCEPTE', 4),
+  (8, '2026-10-16', 'Absence non justifiée', 0, 'AUCUN', 4);
 
 INSERT INTO document_employe (id_document, id_employe, id_contrat, type, nom_fichier, format, chemin_stockage) VALUES
   (1, 6, 6, 'CONTRAT', 'Contrat_Paul_Mballa.docx', 'docx', 'storage/documents/6/Contrat_Paul_Mballa.docx'),

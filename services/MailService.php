@@ -15,6 +15,12 @@ class MailService
     }
 
    
+    public function envoyerMessage(string $email, string $sujet, string $texte): bool
+    {
+        $html = '<p>' . nl2br(htmlspecialchars($texte, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) . '</p>';
+        return $this->envoyer($email, $sujet, $html, $texte);
+    }
+
     public function envoyerCodeReinitialisation(string $email, string $code, int $minutesValidite): bool
     {
         $sujet = 'PerPay : votre code de réinitialisation';

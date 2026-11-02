@@ -11,7 +11,13 @@ require APP_PATH . '/core/helpers.php';
 
 // Chargeur automatique : App\Core\Router => app/core/Router.php, etc.
 spl_autoload_register(function (string $class): void {
-    $dossiers = ['App\\Core\\' => 'core', 'App\\Controllers\\' => 'controllers', 'App\\Models\\' => 'models'];
+    $dossiers = [
+        'App\\Core\\' => 'core',
+        'App\\Controllers\\' => 'controllers',
+        'App\\Models\\' => 'models',
+        'App\\Services\\' => 'services',
+        'App\\Paie\\' => 'Paie',
+    ];
     foreach ($dossiers as $prefixe => $dossier) {
         if (str_starts_with($class, $prefixe)) {
             $fichier = APP_PATH . '/' . $dossier . '/' . substr($class, strlen($prefixe)) . '.php';
