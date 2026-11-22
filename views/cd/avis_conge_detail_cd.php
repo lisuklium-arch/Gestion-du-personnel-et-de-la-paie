@@ -1,121 +1,87 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
+require_once __DIR__ . '/../../services/DemandeCongeService.php';
+require_once __DIR__ . '/../layout/conges_helpers.php';
 exigerRole(['chef']);
-require_once __DIR__ . '/donnees_demo_cd.php';
 
-$pageTitle = 'Avis sur un congé';
-$active = 'avis';
-$scripts = ['forms.js', 'cd.js'];
+$svc = new DemandeCongeService($pdo);
+$id = (int) ($_GET['id'] ?? 0);
+$d = $svc->trouver($id);
+if ($d === null) { http_response_code(404); exit('Demande introuvable.'); }
 
-$ref = $_GET['ref'] ?? '';
-$c = is_string($ref) ? ($conges[$ref] ?? null) : null;
-
-if ($c === null) {
-    http_response_code(404);
-    $sousTitre = '<a class="breadcrumb-link" href="avis_conges_cd.php">Employés en congé</a> / Introuvable';
-} else {
-    $e = $equipe[$c['emp']];
-    [$etat, $ton] = $etatsConge[$c['etat']];
-    $avisTexte = $c['avis'] === 'favorable' ? 'favorable' : 'défavorable';
-    $sousTitre = '<a class="breadcrumb-link" href="avis_conges_cd.php">Employés en congé</a> / ' . h($ref);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfExiger();
+    $decision = $_POST['decision'] ?? '';
+    $commentaire = trim((string)($_POST['commentaire'] ?? ''));
+    try {
+        $svc->avisChef($id, (int)$_SESSION['utilisateur_id'], $decision, $commentaire !== '' ? $commentaire : null);
+        $_SESSION['flash_conge'] = ['ok'=>true,'msg'=>'Avis enregistré. La demande est transmise à la RH.'];
+        header('Location: avis_conges_cd.php');
+        exit;
+    } catch (Throwable $e) {
+        $erreur = $e->getMessage();
+    }
 }
-
-include __DIR__ . '/../layout/debut_cd.php';
+[$lib,$cls]=conge_statut_badge($d['statut']);
 ?>
-
-      <?php if ($c === null): ?>
-        <section class="card-panel card-panel--cd-form">
-          <h2 class="card-panel__title">Demande introuvable</h2>
-          <p>Cette demande de congé n’existe pas ou ne fait pas partie de votre équipe.</p>
-          <div class="app-actions">
-            <a href="avis_conges_cd.php" class="btn btn-neutral text-decoration-none">Retour à la liste</a>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Avis #<?= (int)$d['id'] ?> — PerPay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="/public/css/tokens.css">
+  <link rel="stylesheet" href="/public/css/base.css">
+  <link rel="stylesheet" href="/public/css/components.css">
+  <link rel="stylesheet" href="/public/css/layout.css">
+  <link rel="stylesheet" href="/public/css/domaine-c.css">
+  <?php include __DIR__ . '/../layout/head_cd.php'; ?>
+</head>
+<body>
+<div class="app-shell">
+  <?php $active = 'avis'; include __DIR__ . '/../layout/navbar_cd.php'; ?>
+  <div class="app-main">
+    <header class="app-header">
+      <div class="app-header__heading">
+        <h1 class="app-header__title"><?= h($d['prenom'].' '.$d['nom']) ?></h1>
+        <p class="app-header__sub"><a href="avis_conges_cd.php">Avis congés</a> / #<?= (int)$d['id'] ?></p>
+      </div>
+      <?php include __DIR__ . '/../layout/cloche.php'; ?>
+    </header>
+    <main class="app-content">
+      <?php if (!empty($erreur)): ?><div class="dc-alert dc-alert--err"><?= h($erreur) ?></div><?php endif; ?>
+      <section class="card-panel mb-3">
+        <p><span class="dc-badge <?= h($cls) ?>"><?= h($lib) ?></span></p>
+        <p class="mb-1"><strong><?= h($d['type_libelle']) ?></strong> · <?= h(conge_fmt_nb($d['nb_jours'])) ?> j.</p>
+        <p class="mb-1"><?= h(conge_fmt_date($d['date_debut'])) ?> – <?= h(conge_fmt_date($d['date_fin'])) ?></p>
+        <p class="mb-1">Motif : <?= h($d['motif'] ?: '—') ?></p>
+        <?php if (!empty($d['justificatif_chemin'])): ?>
+          <p><a href="/public/telecharger_justificatif.php?type=conge&id=<?= (int)$d['id'] ?>">Justificatif</a></p>
+        <?php endif; ?>
+      </section>
+      <?php if ($d['statut'] === 'en_attente_chef'): ?>
+      <section class="card-panel">
+        <h2 class="card-panel__title">Votre avis (consultatif)</h2>
+        <form method="post" class="row g-3">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+          <div class="col-12">
+            <label class="form-label">Commentaire</label>
+            <textarea name="commentaire" class="form-control" rows="2" maxlength="255"></textarea>
           </div>
-        </section>
+          <div class="col-12 dc-actions">
+            <button class="btn btn-primary" name="decision" value="favorable" type="submit">Avis favorable</button>
+            <button class="btn btn-neutral" name="decision" value="defavorable" type="submit">Avis défavorable</button>
+            <a class="btn btn-neutral" href="avis_conges_cd.php">Retour</a>
+          </div>
+        </form>
+      </section>
       <?php else: ?>
-        <div class="app-person">
-          <span class="avatar" aria-hidden="true"><?= h(initiales($e['nom'])) ?></span>
-          <div>
-            <p class="app-person__name"><?= h($e['nom']) ?></p>
-            <p class="app-person__meta"><?= h($c['emp']) ?> • <?= h($e['poste']) ?> • <?= h($chef['departement']) ?></p>
-          </div>
-        </div>
-
-        <div class="app-split">
-          <div class="app-stack">
-            <section class="card-panel">
-              <div class="card-panel__head">
-                <span class="icon-tile icon-tile--sm"><i class="fa-regular fa-calendar" aria-hidden="true"></i></span>
-                <h2 class="card-panel__title">Demande <?= h($ref) ?></h2>
-                <span class="badge-status badge-status--<?= $ton ?> badge-status--dot ms-auto"><?= h($etat) ?></span>
-              </div>
-              <dl class="info-grid">
-                <div><dt>Type de congé</dt><dd><?= h($c['type']) ?></dd></div>
-                <div><dt>Période</dt><dd><?= h(periodeLongueFr($c['debut'], $c['fin'])) ?></dd></div>
-                <div><dt>Durée</dt><dd><?= h(libelleJours(joursOuvres($c['debut'], $c['fin']), true)) ?></dd></div>
-                <div><dt>Déposée le</dt><dd><?= h(dateFr($c['depose'])) ?></dd></div>
-                <div><dt>Solde après ce congé</dt><dd><?= (int) $c['solde_apres'] ?> jours</dd></div>
-                <div><dt>Motif</dt><dd><?= h($c['motif']) ?></dd></div>
-              </dl>
-            </section>
-
-            <section class="card-panel">
-              <div class="card-panel__head">
-                <span class="icon-tile icon-tile--sm"><i class="fa-regular fa-comment-dots" aria-hidden="true"></i></span>
-                <h2 class="card-panel__title">Votre avis</h2>
-              </div>
-
-              <?php if ($c['avis'] !== null): ?>
-                <div class="note-info note-info--success" role="note">
-                  <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
-                  <span>Avis <?= $avisTexte ?> transmis aux RH le <?= h(dateFr($c['avis_le'])) ?>.</span>
-                </div>
-                <div class="app-actions mt-3">
-                  <a href="avis_conges_cd.php" class="btn btn-neutral text-decoration-none">Retour à la liste</a>
-                </div>
-              <?php else: ?>
-                <div id="avis-confirmation" class="alert alert-success d-none" role="status" aria-live="polite">
-                  <i class="fa-solid fa-circle-check me-1" aria-hidden="true"></i>Avis transmis aux RH. La décision finale leur appartient.
-                </div>
-                <form id="form-avis" class="needs-validation" novalidate data-confirmation="avis-confirmation">
-                  <input type="hidden" name="ref" value="<?= h($ref) ?>">
-                  <fieldset class="mb-3">
-                    <legend class="form-label">Votre avis</legend>
-                    <div class="avis-choices">
-                      <label class="avis-choice"><input type="radio" class="form-check-input mt-0" name="avis" value="favorable" required><span>Avis favorable</span></label>
-                      <label class="avis-choice"><input type="radio" class="form-check-input mt-0" name="avis" value="defavorable" required><span>Avis défavorable</span></label>
-                    </div>
-                    <div class="invalid-feedback">Choisissez un avis.</div>
-                  </fieldset>
-                  <div class="mb-3">
-                    <label for="avis-commentaire" class="form-label">Commentaire <span class="field-tag">Optionnel</span></label>
-                    <textarea id="avis-commentaire" name="commentaire" class="form-control" rows="3"></textarea>
-                  </div>
-                  <div class="app-form-actions">
-                    <button type="submit" class="btn btn-primary"><i class="fa-regular fa-paper-plane me-2" aria-hidden="true"></i>Envoyer mon avis</button>
-                    <a href="avis_conges_cd.php" class="btn btn-neutral text-decoration-none">Annuler</a>
-                  </div>
-                </form>
-              <?php endif; ?>
-            </section>
-          </div>
-
-          <section class="card-panel">
-            <div class="card-panel__head">
-              <span class="icon-tile icon-tile--sm"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i></span>
-              <h2 class="card-panel__title">Circuit de validation</h2>
-            </div>
-            <ol class="step-list">
-              <li class="step-list__item<?= $c['avis'] === null ? ' is-current' : '' ?>">
-                <span class="step-list__num">1</span>
-                <div><p class="step-list__name"><?= h($chef['nom']) ?></p><p class="step-list__role">Chef <?= h($chef['departement']) ?> • Avis</p></div>
-              </li>
-              <li class="step-list__item<?= $c['avis'] !== null && $c['etat'] === 'attente_rh' ? ' is-current' : '' ?>">
-                <span class="step-list__num">2</span>
-                <div><p class="step-list__name">Responsable RH</p><p class="step-list__role">Décision finale</p></div>
-              </li>
-            </ol>
-          </section>
-        </div>
+        <a class="btn btn-neutral" href="avis_conges_cd.php">Retour</a>
       <?php endif; ?>
-
-<?php include __DIR__ . '/../layout/fin_cd.php'; ?>
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -28,6 +28,7 @@ if ($moi === null) {
   <link rel="stylesheet" href="/public/css/base.css">
   <link rel="stylesheet" href="/public/css/components.css">
   <link rel="stylesheet" href="/public/css/layout.css">
+  <?php include __DIR__ . '/../layout/head_notifications.php'; ?>
 </head>
 <body>
 
@@ -41,9 +42,7 @@ if ($moi === null) {
         <div class="app-header__heading">
           <h1 class="app-header__title">Documents</h1>
         </div>
-        <button type="button" class="icon-btn" aria-label="Notifications">
-          <i class="fa-regular fa-bell" aria-hidden="true"></i>
-        </button>
+        <?php include __DIR__ . '/../layout/cloche.php'; ?>
       </header>
 
       <main class="app-content">

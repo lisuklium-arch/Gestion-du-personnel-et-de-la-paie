@@ -1,87 +1,81 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
+require_once __DIR__ . '/../../services/DemandeCongeService.php';
+require_once __DIR__ . '/../layout/conges_helpers.php';
 exigerRole(['dg']);
-require_once __DIR__ . '/donnees_demo_dg.php';
 
-$espace = 'dg';
-$active = 'dg_conges_rh';
-$pageTitle = 'Congés des RH';
-$sousTitre = 'Directeur général — supervision exclusive';
-$scripts = ['gestion.js'];
-
-$d = $congeRh;
-$ref = $d['ref'];
-$demandeuse = $annuaire[$d['emp']];
-$soldes = $employes[$d['emp']]['conges'];
-$jours = joursOuvres($d['debut'], $d['fin']);
-$disponibles = $soldes['acquis'] - $soldes['pris'] - $soldes['attente'];
-
-$actionEntete = '<p class="header-meta">Dépôt • ' . h(dateFr(substr($d['depose'], 0, 10))) . '<br>' . h(substr($d['depose'], 11, 5)) . '</p>';
-
-$decTitre = 'Décision DG';
-$decValider = 'Demande ' . $ref . ' validée. La demandeuse est notifiée et la décision est journalisée.';
-$decRefuser = 'Demande ' . $ref . ' refusée. La demandeuse est notifiée avec le motif.';
-$decNote = 'La demandeuse est notifiée et la décision est journalisée.';
-
-ob_start();
+$svc = new DemandeCongeService($pdo);
+$liste = $svc->fileDg();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfExiger();
+    try {
+        $svc->decisionDg((int)($_POST['id']??0), (int)$_SESSION['utilisateur_id'], (string)($_POST['decision']??''), null);
+        $_SESSION['flash_conge'] = ['ok'=>true,'msg'=>'Décision DG enregistrée.'];
+    } catch (Throwable $e) {
+        $_SESSION['flash_conge'] = ['ok'=>false,'msg'=>$e->getMessage()];
+    }
+    header('Location: conges_rh_dg.php');
+    exit;
+}
+$flash = $_SESSION['flash_conge'] ?? null;
+unset($_SESSION['flash_conge']);
 ?>
-  <div class="app-stack mt-3">
-    <div class="consequence consequence--success">
-      <p class="consequence__title">Après validation</p>
-      <p><?= $soldes['pris'] + $jours ?> jours pris • 0 en attente • <?= $soldes['acquis'] - $soldes['pris'] - $jours ?> disponibles</p>
-    </div>
-    <div class="consequence consequence--danger">
-      <p class="consequence__title">Après refus</p>
-      <p><?= $soldes['pris'] ?> jours pris • 0 en attente • <?= $soldes['acquis'] - $soldes['pris'] ?> disponibles</p>
-    </div>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Congés RH — Direction · PerPay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="/public/css/tokens.css">
+  <link rel="stylesheet" href="/public/css/base.css">
+  <link rel="stylesheet" href="/public/css/components.css">
+  <link rel="stylesheet" href="/public/css/layout.css">
+  <link rel="stylesheet" href="/public/css/domaine-c.css">
+  <?php include __DIR__ . '/../layout/head_page.php'; ?>
+</head>
+<body>
+<div class="app-shell">
+  <?php $active = 'dg_conges_rh'; include __DIR__ . '/../layout/navbar_dg.php'; ?>
+  <div class="app-main">
+    <header class="app-header">
+      <div class="app-header__heading"><h1 class="app-header__title">Congés des responsables RH</h1></div>
+      <?php include __DIR__ . '/../layout/cloche.php'; ?>
+    </header>
+    <main class="app-content">
+      <?php if ($flash): ?><div class="dc-alert <?= $flash['ok']?'dc-alert--ok':'dc-alert--err' ?>"><?= h($flash['msg']) ?></div><?php endif; ?>
+      <section class="card-panel">
+        <div class="table-responsive">
+          <table class="table table-hover dc-table mb-0">
+            <thead><tr><th>RH</th><th>Type</th><th>Période</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($liste as $d): [$lib,$cls]=conge_statut_badge($d['statut']); ?>
+              <tr>
+                <td><?= h($d['prenom'].' '.$d['nom']) ?></td>
+                <td><?= h($d['type_libelle']) ?></td>
+                <td><?= h(conge_fmt_date($d['date_debut'])) ?> – <?= h(conge_fmt_date($d['date_fin'])) ?></td>
+                <td><span class="dc-badge <?= h($cls) ?>"><?= h($lib) ?></span></td>
+                <td>
+                  <?php if ($d['statut']==='en_attente_dg'): ?>
+                  <form method="post" class="dc-actions">
+                    <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+                    <input type="hidden" name="id" value="<?= (int)$d['id'] ?>">
+                    <button class="btn btn-sm btn-primary" name="decision" value="approuve">Approuver</button>
+                    <button class="btn btn-sm btn-neutral" name="decision" value="refuse">Refuser</button>
+                  </form>
+                  <?php else: ?>—<?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; if ($liste===[]): ?>
+              <tr><td colspan="5" class="text-muted">Aucune demande RH.</td></tr>
+            <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
   </div>
-<?php
-$decApres = ob_get_clean();
-
-include __DIR__ . '/../layout/debut_page.php';
-?>
-
-        <div class="note-info note-info--warning" role="note">
-          <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
-          <span>1 demande en attente • Décision réservée au Directeur général.</span>
-        </div>
-
-        <div class="app-split">
-          <div class="app-stack">
-            <section class="card-panel">
-              <div class="card-panel__head card-panel__head--between">
-                <div>
-                  <h2 class="card-panel__title">Demande <?= h($ref) ?></h2>
-                  <p class="card-panel__sub"><?= h($d['type']) ?></p>
-                </div>
-                <?= badge('En attente DG', 'warning') ?>
-              </div>
-
-              <dl class="info-grid">
-                <div><dt>Demandeuse</dt><dd><?= h($demandeuse['nom']) ?><span class="info-grid__sub"><?= h($d['emp']) ?> • <?= h($demandeuse['poste']) ?></span></dd></div>
-                <div><dt>Département</dt><dd><?= h($demandeuse['dept']) ?><span class="info-grid__sub">Dépôt le <?= h(dateHeure($d['depose'])) ?></span></dd></div>
-                <div><dt>Période</dt><dd><?= h(periodeLongueFr($d['debut'], $d['fin'])) ?><span class="info-grid__sub"><?= h(libelleJours($jours, true)) ?></span></dd></div>
-                <div><dt>Type de congé</dt><dd><?= h($d['type']) ?></dd></div>
-                <div><dt>Motif</dt><dd><?= h($d['motif']) ?></dd></div>
-                <div><dt>Organisation du relais</dt><dd><?= h($d['relais']) ?></dd></div>
-              </dl>
-
-              <h3 class="form-label mt-4 mb-2">Solde 2026</h3>
-              <dl class="solde-grid">
-                <div class="solde-grid__item"><dt>Acquis</dt><dd><?= (int) $soldes['acquis'] ?></dd></div>
-                <div class="solde-grid__item"><dt>Pris</dt><dd><?= (int) $soldes['pris'] ?></dd></div>
-                <div class="solde-grid__item solde-grid__item--warning"><dt>En attente</dt><dd><?= (int) $soldes['attente'] ?></dd></div>
-                <div class="solde-grid__item solde-grid__item--success"><dt>Disponibles</dt><dd><?= (int) $disponibles ?></dd></div>
-              </dl>
-            </section>
-
-            <div class="note-info" role="note">
-              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-              <span>Les congés d’un membre RH sont décidés par le DG seul, sans avis du chef ni décision RH.</span>
-            </div>
-          </div>
-
-          <?php include __DIR__ . '/../gestion/decision.php'; ?>
-        </div>
-
-<?php include __DIR__ . '/../layout/fin_page.php'; ?>
+</div>
+</body>
+</html>

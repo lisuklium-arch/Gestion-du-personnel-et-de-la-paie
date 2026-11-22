@@ -1,7 +1,27 @@
 <?php
 // Chargé en première ligne de chaque page : config, erreurs, fuseau, session, PDO.
 
+require_once dirname(__DIR__) . '/app/core/Config.php';
+\App\Core\Config::loadEnvFile(dirname(__DIR__));
+
 $cfg = require __DIR__ . '/config.php';
+$dbEnv = [
+    'host' => 'LEGACY_DB_HOST',
+    'port' => 'LEGACY_DB_PORT',
+    'name' => 'LEGACY_DB_NAME',
+    'user' => 'LEGACY_DB_USER',
+    'pass' => 'LEGACY_DB_PASS',
+];
+foreach ($dbEnv as $key => $envKey) {
+    $value = $_ENV[$envKey] ?? getenv($envKey);
+    if ($value !== false && $value !== null) {
+        $cfg['db'][$key] = $key === 'port' ? (int) $value : $value;
+    }
+}
+$cfg['db']['host'] = ltrim(trim((string) $cfg['db']['host']), '@');
+if ($cfg['db']['host'] === '') {
+    $cfg['db']['host'] = '127.0.0.1';
+}
 
 require __DIR__.'/csrf.php';
 require __DIR__.'/auth.php';

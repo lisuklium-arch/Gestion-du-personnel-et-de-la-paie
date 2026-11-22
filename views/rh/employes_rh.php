@@ -1,11 +1,13 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
 exigerRole(['rh']);
-require_once __DIR__ . '/donnees_demo_rh.php';
+require_once __DIR__ . '/../gestion/aides_gestion.php';
+require_once __DIR__ . '/../../models/Utilisateur.php';
 
 $espace = 'rh';
 $active = 'rh_employes';
 $pageTitle = 'Employés';
+$dossiers = (new Utilisateur($pdo))->compterDossiers();
 $sousTitre = $dossiers['total'] . ' dossiers conservés • ' . $dossiers['actif'] . ' actifs • ' . $dossiers['suspendu'] . ' suspendu • ' . $dossiers['sorti'] . ' sorti';
 $scripts = ['gestion.js'];
 

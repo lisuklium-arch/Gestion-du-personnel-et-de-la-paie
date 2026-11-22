@@ -10,7 +10,7 @@ return [
     ],
     'db' => [
         'host'    => env('DB_HOST', '127.0.0.1'),
-        'port'    => (int) env('DB_PORT', 3306),
+        'port'    => (int) env('DB_PORT', 3307),
         'name'    => env('DB_NAME', 'personnel_paie'),
         'user'    => env('DB_USER', 'paie_app'),
         'pass'    => env('DB_PASS', ''),

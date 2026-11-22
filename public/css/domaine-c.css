@@ -1,0 +1,23 @@
+/* Domaine C — finitions professionnelles (s'appuie sur tokens.css du groupe) */
+.dc-kpis { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 1.5rem; }
+.dc-kpi {
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px;
+  padding: 1rem 1.1rem; box-shadow: 0 1px 2px rgba(32,41,56,.04);
+  border-left: 3px solid var(--color-primary);
+}
+.dc-kpi__label { display:block; font-size:.75rem; font-weight:600; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.04em; }
+.dc-kpi__value { display:block; margin-top:.35rem; font-size:1.5rem; font-weight:700; color:var(--color-primary); letter-spacing:-.02em; }
+.dc-kpi__meta { display:block; margin-top:.35rem; font-size:.8rem; color:var(--color-text-muted); }
+.dc-table thead th { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--color-text-muted); }
+.dc-actions { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; }
+.badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.badge-success { background: var(--color-success-bg); color: var(--color-success); }
+.badge-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.badge-info { background: var(--color-info-bg); color: var(--color-info); }
+.badge-neutral { background: #EEF1F4; color: #5A6774; }
+.dc-badge { display:inline-block; padding:.3em .65em; border-radius:6px; font-size:.75rem; font-weight:600; }
+.dc-alert { border-radius:10px; padding:.85rem 1rem; margin-bottom:1rem; }
+.dc-alert--ok { background: var(--color-success-bg); color: var(--color-success); }
+.dc-alert--err { background: var(--color-danger-bg); color: var(--color-danger); }
+.dc-split { display:grid; gap:1.25rem; }
+@media (min-width: 992px) { .dc-split { grid-template-columns: 1.4fr .8fr; } }

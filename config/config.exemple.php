@@ -5,7 +5,7 @@ return [
         'port' => 3306,
         'name' => 'projet8_rh_paie',
         'user' => 'root',
-        'pass' => 'votre_mot_de_passe',
+        'pass' => 'votre_mot_de_passe_mysql',
         'charset' => 'utf8mb4'
     ],
     'app' => [
@@ -16,10 +16,10 @@ return [
     'mail' => [
         'host' => 'smtp.gmail.com',   
         'port' => 587,                          
-        'user' => 'doudyx1@gmail.com',
-        'pass' => 'arhh lhpb jouj gvjp',
+        'user' => 'votre_adresse@gmail.com',
+        'pass' => 'mot_de_passe_application_gmail',
         'chiffrement' => 'tls',
-        'expediteur_email' => 'doudyx1@gmail.com',
+        'expediteur_email' => 'votre_adresse@gmail.com',
         'expediteur_nom' => 'PerPay',
     ],
 ];

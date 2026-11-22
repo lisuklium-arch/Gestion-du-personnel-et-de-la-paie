@@ -1,11 +1,7 @@
-.env
-storage/logs/*
-storage/documents/*
-!storage/logs/.gitkeep
-!storage/documents/.gitkeep
 config/config.php
 vendor/
 uploads/
+.env
 .vscode/
 .idea/
 *.log

@@ -13,7 +13,7 @@
           <h1 class="app-header__title"><?= h($pageTitle) ?></h1>
           <p class="app-header__sub"><?= $sousTitre ?></p>
         </div>
-        <button type="button" class="icon-btn" aria-label="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i></button>
+        <?php include __DIR__ . '/cloche.php'; ?>
       </header>
 
       <main class="app-content">

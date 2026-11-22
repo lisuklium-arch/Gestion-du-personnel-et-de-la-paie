@@ -10,7 +10,13 @@ final class Config
 
     public static function load(): void
     {
-        $fichier = ROOT_PATH . '/.env';
+        self::loadEnvFile(ROOT_PATH);
+        self::$items = require APP_PATH . '/config/config.php';
+    }
+
+    public static function loadEnvFile(string $rootPath): void
+    {
+        $fichier = $rootPath . '/.env';
         if (is_file($fichier)) {
             foreach (file($fichier, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $ligne) {
                 $ligne = trim($ligne);
@@ -22,7 +28,6 @@ final class Config
                 $_ENV[trim($cle)] = trim(trim($valeur), "\"'");
             }
         }
-        self::$items = require APP_PATH . '/config/config.php';
     }
 
     public static function get(string $key, mixed $default = null): mixed

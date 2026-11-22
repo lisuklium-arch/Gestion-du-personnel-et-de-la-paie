@@ -3,6 +3,10 @@
 // À appeler en première ligne des pages protégées (après init.php).
 
 const PAGE_CONNEXION = '/public/login.php';
+const PAGE_CHANGEMENT_MDP = '/public/changer_mot_de_passe.php';
+
+// Scripts accessibles tant que le mot de passe temporaire n'a pas été changé
+const SCRIPTS_SANS_CHANGEMENT_MDP = ['changer_mot_de_passe.php', 'changer_mdp_temporaire.php', 'logout.php'];
 
 function utilisateurConnecte(): bool
 {
@@ -50,6 +54,49 @@ function refuserAcces(int $code, string $message, bool $json): never
     exit;
 }
 
+/** Détruit la session (données, cookie, fichier de session). */
+function fermerSession(): void
+{
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $p = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 3600, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+    }
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+}
+
+/**
+ * Compare la session à l'état réel du compte en base, à chaque requête :
+ * compte désactivé, dossier suspendu ou sorti => session fermée ; rôle modifié => session mise à jour.
+ * Retourne l'état à jour du compte.
+ */
+function verifierEtatCompte(bool $json): array
+{
+    global $pdo;
+    require_once __DIR__ . '/../models/Utilisateur.php';
+
+    $etat = (new Utilisateur($pdo))->etatSession((int) $_SESSION['utilisateur_id']);
+
+    $refuse = $etat === null
+        || $etat['statut_compte'] !== 'actif'
+        || in_array($etat['statut_dossier'], ['suspendu', 'sorti'], true);
+
+    if ($refuse) {
+        fermerSession();
+        if ($json) {
+            refuserAcces(401, 'Votre accès a été retiré. Reconnectez-vous.', true);
+        }
+        header('Location: ' . PAGE_CONNEXION);
+        exit;
+    }
+
+    $_SESSION['role'] = $etat['role'];
+    $_SESSION['doit_changer_mdp'] = (bool) $etat['doit_changer_mdp'];
+    return $etat;
+}
+
 /** Laisse passer un utilisateur connecté, sinon renvoie vers la connexion (401 pour une API). */
 function exigerConnexion(bool $json = false): void
 {
@@ -59,6 +106,20 @@ function exigerConnexion(bool $json = false): void
     }
 
     if (utilisateurConnecte()) {
+        $etat = verifierEtatCompte($json);
+
+        // Mot de passe temporaire : rien d'autre n'est accessible tant qu'il n'est pas changé
+        $script = basename($_SERVER['SCRIPT_NAME'] ?? '');
+        if ((int) $etat['doit_changer_mdp'] === 1 && !in_array($script, SCRIPTS_SANS_CHANGEMENT_MDP, true)) {
+            if ($json) {
+                http_response_code(403);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['ok' => false, 'message' => 'Changement de mot de passe requis.', 'redirection' => PAGE_CHANGEMENT_MDP], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+            header('Location: ' . PAGE_CHANGEMENT_MDP);
+            exit;
+        }
         return;
     }
 
