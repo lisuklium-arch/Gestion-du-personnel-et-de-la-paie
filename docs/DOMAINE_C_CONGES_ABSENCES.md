@@ -1,29 +1,56 @@
-# Domaine C — Congés & absences
+# Domaine C — Congés & absences (version complète)
 
-## Intégration dans le projet de groupe
+## Migrations (ordre strict)
 
-- **Aucune table existante n’a été supprimée.**
-- Ajouts SQL : `database/migrations/20261114_domaine_c_conges_absences_compatible.sql`
-  - colonne `solde_conge.jours_reserves`
-  - colonne `absence.justificatif_chemin`
-  - table `mouvement_solde_conge` + triggers d’immuabilité
-  - backfill ACQUISITION depuis les soldes déjà présents
+1. `20261114_domaine_c_conges_absences_compatible.sql`
+2. `20261117_domaine_c_enrichissement.sql`
+3. `20261117_domaine_c_complet.sql` (statuts brouillon/en_cours/terminee, report, types enrichis, paramètres)
 
-## Justificatifs (multi-poste)
+## Fonctionnalités
 
-Les fichiers sont enregistrés sous `storage/justificatifs/{conges|absences}/` sur le **serveur**.
-Téléchargement via `/public/telecharger_justificatif.php` (contrôle session + droits).
-Le dossier `storage/` est protégé par `.htaccess` (pas d’accès HTTP direct).
+### Employé
+- Formulaire riche (identité auto, demi-journées, contact, relève, justificatif serveur)
+- Aperçu calcul (calendaires, WE, fériés, décompte, reprise)
+- Brouillon (sans réservation de solde)
+- Soumission avec réservation journal
+- Annulation / duplication / PDF imprimable
+- Historique des décisions
 
-## Circuit
+### Chef
+- Avis consultatif
+- Absences d’équipe + justificatifs serveur
+- Calendrier (existant groupe)
 
-1. Employé dépose → réservation journal si type à décompte
-2. Chef : avis consultatif → statut `en_attente_rh`
-3. RH : décision (si demandeur = RH et approbation → `en_attente_dg`)
-4. DG : décision sur congés des RH
-5. Annulation employé (tant que non tranchée) → libération
+### RH
+- Décisions de congés
+- Catalogue **Types de congés** (règles par type)
+- **Politiques congés** (préavis, durée max, max demandes, rétroactif…)
 
-## Contrats pour la paie
+### DG
+- Décision des congés des RH
 
-- `AbsenceService::nonJustifieesDuMois($employeId, $mois, $annee)`
-- Solde disponible = `jours_acquis - jours_reserves - jours_pris` (colonnes tenues à jour depuis le journal)
+### Moteur
+- Journal immuable `mouvement_solde_conge`
+- Disponible = acquis + reportés − réservé − pris
+- Contrôles : solde, chevauchement, absence, préavis, politiques, anti auto-validation
+- Statuts temps : approuvée → en_cours → terminee
+
+## Hors périmètre volontaire (phase ultérieure)
+- Calendriers distincts par département/employé
+- Délégation automatique si chef absent
+- Acquisition mensuelle automatique (batch)
+- Multi-périodes fractionnées en une seule demande
+
+## Retours métier (2026-11-23)
+
+- **Avis chef** : uniquement si `departement.chef_id` pointe vers l’employé-chef dont `utilisateur_id` = session ; sinon la demande part directement en RH.
+- **Congés RH** : statut initial `en_attente_dg` ; la RH ne peut pas décider ces demandes.
+- **Date de début** : interdite si &lt; aujourd’hui (UI `min=` + contrôle serveur).
+- **Heures** : colonnes `heure_debut` / `heure_fin` (migration `20261123_domaine_c_retours.sql`).
+
+### Renseigner les chefs de département
+
+```sql
+-- Exemple : employé id=2 devient chef du département id=2
+UPDATE departement SET chef_id = 2 WHERE id = 2;
+```

@@ -52,7 +52,8 @@ unset($_SESSION['flash_conge']);
   <?php $active = 'absences'; include __DIR__ . '/../layout/navbar_cd.php'; ?>
   <div class="app-main">
     <header class="app-header">
-      <div class="app-header__heading"><h1 class="app-header__title">Absences d’équipe</h1></div>
+      <div class="app-header__heading"><h1 class="app-header__title">Absences d’équipe</h1>
+        <p class="app-header__sub">Marquage réservé au chef · justificatifs stockés sur le serveur</p></div>
       <?php include __DIR__ . '/../layout/cloche.php'; ?>
     </header>
     <main class="app-content">

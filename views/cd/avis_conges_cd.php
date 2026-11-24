@@ -29,7 +29,10 @@ unset($_SESSION['flash_conge']);
   <?php $active = 'avis'; include __DIR__ . '/../layout/navbar_cd.php'; ?>
   <div class="app-main">
     <header class="app-header">
-      <div class="app-header__heading"><h1 class="app-header__title">Avis sur les congés</h1></div>
+      <div class="app-header__heading">
+        <h1 class="app-header__title">Avis sur les congés</h1>
+        <p class="app-header__sub">Réservé au chef du département des demandeurs · avis consultatif avant décision RH</p>
+      </div>
       <?php include __DIR__ . '/../layout/cloche.php'; ?>
     </header>
     <main class="app-content">

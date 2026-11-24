@@ -2,10 +2,13 @@
 function conge_statut_badge(string $statut): array
 {
     return match ($statut) {
+        'brouillon'       => ['Brouillon', 'badge-neutral'],
         'en_attente_chef' => ['Avis chef', 'badge-warning'],
         'en_attente_rh'   => ['Décision RH', 'badge-warning'],
         'en_attente_dg'   => ['Décision DG', 'badge-info'],
         'approuvee'       => ['Approuvée', 'badge-success'],
+        'en_cours'        => ['En cours', 'badge-info'],
+        'terminee'        => ['Terminée', 'badge-neutral'],
         'refusee'         => ['Refusée', 'badge-danger'],
         'annulee'         => ['Annulée', 'badge-neutral'],
         default           => [$statut, 'badge-neutral'],

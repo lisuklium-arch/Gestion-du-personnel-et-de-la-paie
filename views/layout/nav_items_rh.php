@@ -7,6 +7,10 @@ $rhBase = '/views/rh/';
 $rhItems = [
     'rh_tableau'    => ['label' => 'Tableau de bord',     'short' => 'Accueil',   'icon' => 'fa-solid fa-table-columns',     'url' => $rhBase . 'tableau_bord_rh.php'],
     'rh_conges'    => ['label' => 'Congés',              'short' => 'Congés',    'icon' => 'fa-regular fa-calendar',        'url' => $rhBase . 'conges_rh.php'],
+    'rh_types_conge' => ['label' => 'Types de congés',    'short' => 'Types',     'icon' => 'fa-solid fa-tags',              'url' => $rhBase . 'types_conge_rh.php'],
+    'rh_politiques_conge' => ['label' => 'Politiques congés', 'short' => 'Règles', 'icon' => 'fa-solid fa-sliders',           'url' => $rhBase . 'politiques_conge_rh.php'],
+    'rh_pilotage_conges' => ['label' => 'Pilotage congés',    'short' => 'Pilotage',  'icon' => 'fa-solid fa-chart-line',         'url' => $rhBase . 'pilotage_conges_rh.php'],
+    'rh_soldes_annee' => ['label' => 'Soldes / années',   'short' => 'Soldes',   'icon' => 'fa-solid fa-calendar-plus',      'url' => $rhBase . 'soldes_annee_rh.php'],
     'rh_demandes'   => ['label' => 'Demandes à traiter',  'short' => 'Demandes',  'icon' => 'fa-solid fa-inbox',             'url' => $rhBase . 'demandes_rh.php', 'badge' => 8],
     'rh_employes'   => ['label' => 'Employés',            'short' => 'Employés',  'icon' => 'fa-solid fa-users',             'url' => $rhBase . 'employes_rh.php'],
     'rh_compte'     => ['label' => 'Création de compte',  'short' => 'Compte',    'icon' => 'fa-solid fa-user-plus',         'url' => $rhBase . 'compte_creation_rh.php'],

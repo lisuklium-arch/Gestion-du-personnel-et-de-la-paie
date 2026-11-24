@@ -11,6 +11,7 @@ if ($moi === null) {
     exit('Aucun dossier employé associé à ce compte.');
 }
 $svc = new DemandeCongeService($pdo);
+$svc->actualiserStatutsTemps();
 $annee = (int) date('Y');
 $soldes = $svc->soldesEmploye((int) $moi['id'], $annee);
 $demandes = $svc->demandesEmploye((int) $moi['id']);
@@ -46,8 +47,11 @@ unset($_SESSION['flash_conge']);
       <?php include __DIR__ . '/../layout/cloche.php'; ?>
     </header>
     <main class="app-content">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <p class="app-meta mb-0"><?= h($moi['prenom'] . ' ' . $moi['nom']) ?> · Soldes <?= $annee ?></p>
+      <div class="dc-hero">
+        <div>
+          <h2 class="dc-hero__title">Mes congés</h2>
+          <p class="dc-hero__sub"><?= h($moi['prenom'] . ' ' . $moi['nom']) ?> · Compteurs <?= $annee ?> · Circuit chef → RH (DG si RH)</p>
+        </div>
         <a class="btn btn-primary" href="conges_nouvelle_demande_employe.php"><i class="fa-solid fa-plus me-2"></i>Nouvelle demande</a>
       </div>
       <?php if ($flash): ?>
@@ -66,7 +70,7 @@ unset($_SESSION['flash_conge']);
         <?php endforeach; endif; ?>
       </section>
 
-      <section class="card-panel">
+      <section class="card-panel dc-elevated">
         <div class="card-panel__head">
           <h2 class="card-panel__title">Mes demandes</h2>
         </div>
@@ -79,15 +83,16 @@ unset($_SESSION['flash_conge']);
             </thead>
             <tbody>
             <?php if ($demandes === []): ?>
-              <tr><td colspan="5" class="text-muted">Aucune demande pour le moment.</td></tr>
+              <tr><td colspan="5"><div class="dc-empty"><i class="fa-regular fa-calendar"></i>Aucune demande pour le moment.</div></td></tr>
             <?php else: foreach ($demandes as $d): [$lib, $cls] = conge_statut_badge($d['statut']); ?>
               <tr>
                 <td><?= h($d['type_libelle']) ?></td>
                 <td><?= h(conge_fmt_date($d['date_debut'])) ?> – <?= h(conge_fmt_date($d['date_fin'])) ?></td>
                 <td><?= h(conge_fmt_nb($d['nb_jours'])) ?></td>
                 <td><span class="dc-badge <?= h($cls) ?>"><?= h($lib) ?></span></td>
-                <td class="text-end">
+                <td class="text-end dc-actions">
                   <a class="btn btn-sm btn-neutral" href="conge_detail_employe.php?id=<?= (int) $d['id'] ?>">Ouvrir</a>
+                  <a class="btn btn-sm btn-neutral" href="conge_pdf_employe.php?id=<?= (int) $d['id'] ?>" target="_blank">PDF</a>
                 </td>
               </tr>
             <?php endforeach; endif; ?>

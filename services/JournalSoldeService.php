@@ -24,7 +24,8 @@ class JournalSoldeService
 
     public function disponible(array $solde): float
     {
-        return (float) $solde['jours_acquis'] - (float) ($solde['jours_reserves'] ?? 0) - (float) $solde['jours_pris'];
+        $acquis = (float) $solde['jours_acquis'] + (float) ($solde['jours_reportes'] ?? 0);
+        return $acquis - (float) ($solde['jours_reserves'] ?? 0) - (float) $solde['jours_pris'];
     }
 
     public function poster(

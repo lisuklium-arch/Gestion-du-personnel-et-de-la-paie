@@ -44,7 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <?php $active = 'rh_conges'; include __DIR__ . '/../layout/navbar_rh.php'; ?>
   <div class="app-main">
     <header class="app-header">
-      <div class="app-header__heading"><h1 class="app-header__title">Décisions de congés</h1></div>
+      <div class="app-header__heading"><h1 class="app-header__title">Décisions de congés</h1>
+        <p class="app-header__sub">Les congés des responsables RH sont tranchés uniquement par le directeur général.</p></div>
       <?php include __DIR__ . '/../layout/cloche.php'; ?>
     </header>
     <main class="app-content">

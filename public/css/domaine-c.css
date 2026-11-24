@@ -1,23 +1,173 @@
-/* Domaine C — finitions professionnelles (s'appuie sur tokens.css du groupe) */
-.dc-kpis { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 1.5rem; }
-.dc-kpi {
-  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px;
-  padding: 1rem 1.1rem; box-shadow: 0 1px 2px rgba(32,41,56,.04);
-  border-left: 3px solid var(--color-primary);
+/* Domaine C — interfaces professionnelles (tokens du groupe) */
+.dc-kpis {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  margin-bottom: 1.5rem;
 }
-.dc-kpi__label { display:block; font-size:.75rem; font-weight:600; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.04em; }
-.dc-kpi__value { display:block; margin-top:.35rem; font-size:1.5rem; font-weight:700; color:var(--color-primary); letter-spacing:-.02em; }
-.dc-kpi__meta { display:block; margin-top:.35rem; font-size:.8rem; color:var(--color-text-muted); }
-.dc-table thead th { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--color-text-muted); }
-.dc-actions { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; }
+.dc-kpi {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 4px 14px rgba(32, 41, 56, 0.05);
+  border-left: 4px solid var(--color-primary);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.dc-kpi:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(32, 41, 56, 0.08);
+}
+.dc-kpi__label {
+  display: block;
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.dc-kpi__value {
+  display: block;
+  margin-top: .4rem;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+.dc-kpi__meta {
+  display: block;
+  margin-top: .4rem;
+  font-size: .8rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+.dc-table thead th {
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--color-text-muted);
+  border-bottom-width: 1px;
+  white-space: nowrap;
+}
+.dc-table tbody tr:hover { background: rgba(var(--color-primary-rgb), 0.03); }
+.dc-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
 .badge-success { background: var(--color-success-bg); color: var(--color-success); }
 .badge-danger { background: var(--color-danger-bg); color: var(--color-danger); }
 .badge-info { background: var(--color-info-bg); color: var(--color-info); }
 .badge-neutral { background: #EEF1F4; color: #5A6774; }
-.dc-badge { display:inline-block; padding:.3em .65em; border-radius:6px; font-size:.75rem; font-weight:600; }
-.dc-alert { border-radius:10px; padding:.85rem 1rem; margin-bottom:1rem; }
-.dc-alert--ok { background: var(--color-success-bg); color: var(--color-success); }
-.dc-alert--err { background: var(--color-danger-bg); color: var(--color-danger); }
-.dc-split { display:grid; gap:1.25rem; }
-@media (min-width: 992px) { .dc-split { grid-template-columns: 1.4fr .8fr; } }
+.dc-badge {
+  display: inline-block;
+  padding: .35em .7em;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.dc-alert {
+  border-radius: 12px;
+  padding: .95rem 1.1rem;
+  margin-bottom: 1rem;
+  font-size: .92rem;
+  border: 1px solid transparent;
+}
+.dc-alert--ok { background: var(--color-success-bg); color: var(--color-success); border-color: rgba(35,116,71,.2); }
+.dc-alert--err { background: var(--color-danger-bg); color: var(--color-danger); border-color: rgba(181,46,50,.2); }
+.dc-split { display: grid; gap: 1.35rem; }
+@media (min-width: 992px) { .dc-split { grid-template-columns: 1.45fr .85fr; align-items: start; } }
+
+.dc-hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+}
+.dc-hero__title { margin: 0; font-size: 1.35rem; font-weight: 700; }
+.dc-hero__sub { margin: .25rem 0 0; color: var(--color-text-muted); font-size: .9rem; }
+
+.dc-id-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: .85rem 1rem;
+}
+.dc-id-grid__label {
+  display: block;
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+.dc-id-grid__value { display: block; margin-top: .2rem; font-weight: 600; color: var(--color-text); }
+
+.dc-side-card {
+  background: linear-gradient(165deg, rgba(var(--color-primary-rgb), 0.06) 0%, var(--color-surface) 42%);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 1.15rem 1.2rem;
+  margin-bottom: 1rem;
+}
+.dc-side-card h2 {
+  margin: 0 0 .75rem;
+  font-size: .95rem;
+  font-weight: 700;
+}
+.dc-calc-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .35rem 0;
+  font-size: .88rem;
+  border-bottom: 1px dashed var(--color-border);
+}
+.dc-calc-row:last-child { border-bottom: 0; }
+.dc-calc-row--hl {
+  margin-top: .35rem;
+  padding-top: .55rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 0;
+}
+
+.dc-section-title {
+  font-size: .8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--color-text-muted);
+  margin: 0 0 .75rem;
+}
+.card-panel.dc-elevated {
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(32, 41, 56, 0.06);
+  border: 1px solid var(--color-border);
+}
+.dc-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--color-text-muted);
+}
+.dc-empty i { font-size: 1.75rem; opacity: .45; margin-bottom: .5rem; display: block; }
+
+.dc-timeline { list-style: none; margin: 0; padding: 0; }
+.dc-timeline li {
+  position: relative;
+  padding: 0 0 1rem 1.15rem;
+  border-left: 2px solid var(--color-border);
+  font-size: .88rem;
+}
+.dc-timeline li:last-child { padding-bottom: 0; }
+.dc-timeline li::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: .35rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
