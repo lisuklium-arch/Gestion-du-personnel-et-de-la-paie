@@ -6,8 +6,8 @@ require_once __DIR__ . '/donnees_demo_dg.php';
 $espace = 'dg';
 $active = 'dg_compte';
 $pageTitle = 'Création de compte';
-$sousTitre = 'Nouveau dossier employé et compte de connexion • Formulaire non encore enregistré';
-$scripts = ['forms.js', 'gestion.js'];
+$sousTitre = 'Nouveau dossier employé et compte de connexion';
+$scripts = ['forms.js', 'gestion.js', 'poste-departement.js'];
 
 $modeCompte = 'dg';
 $listeUrl = 'employes_dg.php';

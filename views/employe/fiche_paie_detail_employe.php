@@ -28,6 +28,7 @@ if ($moi === null) {
   <link rel="stylesheet" href="/public/css/base.css">
   <link rel="stylesheet" href="/public/css/components.css">
   <link rel="stylesheet" href="/public/css/layout.css">
+  <?php include __DIR__ . '/../layout/head_notifications.php'; ?>
 </head>
 <body>
 
@@ -42,9 +43,7 @@ if ($moi === null) {
           <h1 class="app-header__title">Détail de fiche de paie</h1>
           <p class="app-header__sub">Septembre 2026 • Fiche FP-2026-09-0042</p>
         </div>
-        <button type="button" class="icon-btn" aria-label="Notifications">
-          <i class="fa-regular fa-bell" aria-hidden="true"></i>
-        </button>
+        <?php include __DIR__ . '/../layout/cloche.php'; ?>
       </header>
 
       <main class="app-content">

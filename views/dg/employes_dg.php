@@ -1,13 +1,15 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
 exigerRole(['dg']);
-require_once __DIR__ . '/donnees_demo_dg.php';
+require_once __DIR__ . '/../gestion/aides_gestion.php';
+require_once __DIR__ . '/../../models/Utilisateur.php';
 
 $espace = 'dg';
 $active = 'dg_employes';
 $pageTitle = 'Employés';
-$sousTitre = $dossiers['total'] . ' dossiers conservés • ' . $dossiers['actif'] . ' actifs • ' . $dossiers['suspendu'] . ' suspendu • ' . $dossiers['sorti'] . ' sorti • Consultation';
-$scripts = ['gestion.js'];
+$dossiers = (new Utilisateur($pdo))->compterDossiers();
+$sousTitre = $dossiers['total'] . ' dossiers conservés • ' . $dossiers['actif'] . ' actifs • ' . $dossiers['suspendu'] . ' suspendu • ' . $dossiers['sorti'] . ' sorti';
+$scripts = ['gestion.js', 'employes-recherche.js'];
 
 $ficheUrl = 'employe_fiche_dg.php';
 $creerUrl = 'compte_creation_dg.php';

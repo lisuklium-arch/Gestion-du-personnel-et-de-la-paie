@@ -10,6 +10,9 @@ class AuthService
     // Faux hash servant à garder un temps de réponse similaire quand l'e-mail n'existe pas
     private const HASH_FACTICE = '$2y$10$3aRm/oijEhdn34nVnL9Kx.NgXI5vsKy5tr3/E4pGtj/J3EcWXXmiq';
 
+    private const ESSAIS_MAX = 5;
+    private const FENETRE_ESSAIS_MIN = 10;
+
     private Utilisateur $utilisateurs;
     private Employe $employes;
     private JournalService $journalService;
@@ -31,9 +34,18 @@ class AuthService
         $email = trim($email);
         $user  = $this->utilisateurs->trouverParEmail($email);
 
+        // Trop d'échecs récents sur ce compte : on refuse avant même de tester le mot de passe
+        if ($user !== null
+            && $this->journalService->compterRecents((int) $user['id'], 'echec_connexion', self::FENETRE_ESSAIS_MIN) >= self::ESSAIS_MAX) {
+            return ['ok' => false, 'message' => 'Trop de tentatives. Réessayez dans ' . self::FENETRE_ESSAIS_MIN . ' minutes.'];
+        }
+
         // Même message pour "e-mail inconnu" et "mot de passe faux"
         $hash = $user['mot_de_passe_hash'] ?? self::HASH_FACTICE;
         if ($user === null || !password_verify($motDePasse, $hash)) {
+            if ($user !== null) {
+                $this->journalService->enregistrer((int) $user['id'], 'echec_connexion', 'utilisateur', (int) $user['id']);
+            }
             return ['ok' => false, 'message' => 'Identifiants incorrects.'];
         }
 
@@ -45,7 +57,11 @@ class AuthService
             return ['ok' => false, 'message' => 'Votre compte est désactivé.'];
         }
 
-        
+        // Dossier employé suspendu ou sorti : pas d'accès
+        $employee = $this->employes->trouverParUtilisateurId((int) $user['id']);
+        if ($employee !== null && $employee['statut'] !== 'actif') {
+            return ['ok' => false, 'message' => "Votre dossier employé n'est plus actif. Contactez les ressources humaines."];
+        }
 
         // Ouverture de session
         session_regenerate_id(true);
@@ -53,8 +69,7 @@ class AuthService
         $_SESSION['utilisateur_id']   = (int) $user['id'];
         $_SESSION['role']             = $user['role'];
         $_SESSION['doit_changer_mdp'] = (bool) $user['doit_changer_mdp'];
-        
-        $employee = $this->employes->trouverParUtilisateurId((int) $user['id']);
+
         if ($employee !== null) {
             $_SESSION['nom_affiche'] = $employee['prenom'] . ' ' . $employee['nom'];
         } else {
@@ -80,12 +95,7 @@ class AuthService
             $id = (int) $_SESSION['utilisateur_id'];
             $this->journalService->enregistrer($id, 'deconnexion', 'utilisateur', $id);
         }
-    
-        $_SESSION = [];
-        if (ini_get('session.use_cookies')) {
-            $p = session_get_cookie_params();
-            setcookie(session_name(), '', time() - 3600, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
-        }
-        session_destroy();
+
+        fermerSession();
     }
 }

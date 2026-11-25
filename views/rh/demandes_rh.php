@@ -1,6 +1,16 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
 exigerRole(['rh']);
+
+if (($_GET['type'] ?? '') === 'modifications') {
+    require __DIR__ . '/demandes_modifications_rh.php';
+    return;
+}
+if (($_GET['type'] ?? '') === 'attestations') {
+    require __DIR__ . '/demandes_attestations_rh.php';
+    return;
+}
+
 require_once __DIR__ . '/donnees_demo_rh.php';
 
 function objetDemande(string $type, array $d): string

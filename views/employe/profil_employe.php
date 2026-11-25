@@ -3,7 +3,9 @@ require_once __DIR__ . '/../../config/init.php';
 require_once __DIR__ .'/../../models/Employe.php';
 exigerRole(['employe', 'chef', 'rh']);
 
-$moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+$employes = new Employe($pdo);
+$resume = $employes->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
+$moi = $resume === null ? null : $employes->trouver((int) $resume['id']);
 if ($moi === null) {
     http_response_code(404);
     exit('Aucun dossier employé n\'est associé à ce compte.');
@@ -28,6 +30,7 @@ if ($moi === null) {
   <link rel="stylesheet" href="/public/css/base.css">
   <link rel="stylesheet" href="/public/css/components.css">
   <link rel="stylesheet" href="/public/css/layout.css">
+  <?php include __DIR__ . '/../layout/head_notifications.php'; ?>
 </head>
 <body>
 
@@ -41,9 +44,7 @@ if ($moi === null) {
         <div class="app-header__heading">
           <h1 class="app-header__title">Profil</h1>
         </div>
-        <button type="button" class="icon-btn" aria-label="Notifications">
-          <i class="fa-regular fa-bell" aria-hidden="true"></i>
-        </button>
+        <?php include __DIR__ . '/../layout/cloche.php'; ?>
       </header>
 
       <main class="app-content">
@@ -56,9 +57,9 @@ if ($moi === null) {
               <div class="card-panel__head"><span class="icon-tile icon-tile--sm"><i class="fa-regular fa-user" aria-hidden="true"></i></span><h2 class="card-panel__title">Identité et coordonnées</h2><div class="card-panel__aside"><span class="badge-status badge-status--success badge-status--dot">Actif</span></div></div>
               <dl class="info-grid">
                 <div><dt>Nom complet</dt><dd><?= h($moi['prenom'] . ' ' . $moi['nom']) ?></dd></div>
-                <div><dt>Matricule</dt><dd><span class="chip">EMP-0042</span></dd></div>
-                <div><dt>Date de naissance</dt><dd><i class="fa-regular fa-calendar" aria-hidden="true"></i>14/05/1992</dd></div>
-                <div><dt>Téléphone</dt><dd><i class="fa-solid fa-phone" aria-hidden="true"></i>+237 699 12 34 56</dd></div>
+                <div><dt>Matricule</dt><dd><span class="chip"><?= h($moi['matricule']) ?></span></dd></div>
+                <div><dt>Date de naissance</dt><dd><i class="fa-regular fa-calendar" aria-hidden="true"></i><?= $moi['date_naissance'] ? h((new DateTime($moi['date_naissance']))->format('d/m/Y')) : '—' ?></dd></div>
+                <div><dt>Téléphone</dt><dd><i class="fa-solid fa-phone" aria-hidden="true"></i><?= h((string) $moi['telephone']) ?></dd></div>
                 <div><dt>E-mail professionnel</dt><dd><i class="fa-regular fa-envelope" aria-hidden="true"></i>marie.ngo@entreprise.com</dd></div>
                 <div><dt>Adresse</dt><dd><i class="fa-solid fa-location-dot" aria-hidden="true"></i>Bonamoussadi, Douala</dd></div>
               </dl>
@@ -67,9 +68,9 @@ if ($moi === null) {
             <section class="card-panel">
               <div class="card-panel__head"><span class="icon-tile icon-tile--sm"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span><h2 class="card-panel__title">Situation professionnelle</h2></div>
               <dl class="info-grid">
-                <div><dt>Département / poste</dt><dd><span class="chip chip--success">Finance</span> • Comptable</dd></div>
-                <div><dt>Chef de département</dt><dd><i class="fa-solid fa-user-tie" aria-hidden="true"></i>Jean-Paul Mbarga</dd></div>
-                <div><dt>Date d’embauche</dt><dd><i class="fa-regular fa-calendar" aria-hidden="true"></i>01/03/2023</dd></div>
+                <div><dt>Département / poste</dt><dd><span class="chip chip--success"><?= h($moi['departement']) ?></span> • <?= h($moi['poste']) ?></dd></div>
+                <div><dt>Chef de département</dt><dd><i class="fa-solid fa-user-tie" aria-hidden="true"></i><?= h(trim(($moi['chef_prenom'] ?? '') . ' ' . ($moi['chef_nom'] ?? ''))) ?></dd></div>
+                <div><dt>Date d’embauche</dt><dd><i class="fa-regular fa-calendar" aria-hidden="true"></i><?= h((new DateTime($moi['date_embauche']))->format('d/m/Y')) ?></dd></div>
                 <div><dt>Contrat en cours</dt><dd><span class="chip">CDI</span> 300 000 FCFA de base</dd></div>
                 <div><dt>Compte de connexion</dt><dd><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>Rôle Employé <span class="badge-status badge-status--success">Actif</span></dd></div>
               </dl>

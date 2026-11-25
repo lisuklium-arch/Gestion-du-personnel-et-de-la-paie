@@ -29,6 +29,7 @@ if ($moi === null) {
   <link rel="stylesheet" href="/public/css/base.css">
   <link rel="stylesheet" href="/public/css/components.css">
   <link rel="stylesheet" href="/public/css/layout.css">
+  <?php include __DIR__ . '/../layout/head_notifications.php'; ?>
 </head>
 
 <body>
@@ -40,7 +41,7 @@ if ($moi === null) {
 
       <header class="app-header">
         <h1 class="app-header__title">Accueil</h1>
-
+        <?php include __DIR__ . '/../layout/cloche.php'; ?>
       </header>
 
       <main class="app-content">

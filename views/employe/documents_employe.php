@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
 require_once __DIR__ .'/../../models/Employe.php';
+require_once __DIR__ . '/../../models/DocumentEmploye.php';
+require_once __DIR__ . '/../../models/DemandeDocument.php';
 exigerRole(['employe', 'chef', 'rh']);
 
 $moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
@@ -8,12 +10,17 @@ if ($moi === null) {
     http_response_code(404);
     exit('Aucun dossier employé n\'est associé à ce compte.');
 }
+$documents = (new DocumentEmploye($pdo))->listerPourEmploye((int) $moi['id']);
+$demandes = (new DemandeDocument($pdo))->listerPourEmploye((int) $moi['id']);
+$typesDocument = ['piece_identite' => 'Pièce d’identité', 'diplome' => 'Diplôme', 'contrat_signe' => 'Contrat signé', 'attestation' => 'Attestation', 'autre' => 'Autre document'];
+$typesAttestation = ['attestation_travail' => 'Attestation de travail', 'attestation_salaire' => 'Attestation de salaire'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf" content="<?= h(csrfToken()) ?>">
   <title>Documents — PerPay</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,6 +35,7 @@ if ($moi === null) {
   <link rel="stylesheet" href="/public/css/base.css">
   <link rel="stylesheet" href="/public/css/components.css">
   <link rel="stylesheet" href="/public/css/layout.css">
+  <?php include __DIR__ . '/../layout/head_notifications.php'; ?>
 </head>
 <body>
 
@@ -41,13 +49,11 @@ if ($moi === null) {
         <div class="app-header__heading">
           <h1 class="app-header__title">Documents</h1>
         </div>
-        <button type="button" class="icon-btn" aria-label="Notifications">
-          <i class="fa-regular fa-bell" aria-hidden="true"></i>
-        </button>
+        <?php include __DIR__ . '/../layout/cloche.php'; ?>
       </header>
 
       <main class="app-content">
-        <p class="app-meta"><i class="fa-regular fa-user me-1" aria-hidden="true"></i><?= h($moi['prenom'] . ' ' . $moi['nom']) ?>• EMP-0042 • Documents personnels et attestations</p>
+        <p class="app-meta"><i class="fa-regular fa-user me-1" aria-hidden="true"></i><?= h($moi['prenom'] . ' ' . $moi['nom']) ?> • <?= h($moi['matricule']) ?> • Documents personnels et attestations</p>
 
         <section class="card-panel">
           <div class="card-panel__head"><span class="icon-tile icon-tile--sm"><i class="fa-regular fa-folder" aria-hidden="true"></i></span><h2 class="card-panel__title">Mes documents</h2></div>
@@ -56,15 +62,14 @@ if ($moi === null) {
               <caption class="visually-hidden">Mes documents</caption>
               <thead><tr><th scope="col">Document</th><th scope="col">Ajouté le</th><th scope="col">Format</th><th scope="col">État</th></tr></thead>
               <tbody>
-              <tr><td data-label="Document"><i class="fa-regular fa-file me-2" aria-hidden="true"></i>Contrat CDI signé</td><td data-label="Ajouté le"><span class="data-table__muted">01/03/2023</span></td><td data-label="Format">PDF • 420 Ko</td><td data-label="État"><span class="badge-status badge-status--success badge-status--dot">Disponible</span></td></tr>
-              <tr><td data-label="Document"><i class="fa-regular fa-file me-2" aria-hidden="true"></i>Pièce d’identité</td><td data-label="Ajouté le"><span class="data-table__muted">01/03/2023</span></td><td data-label="Format">PDF • 180 Ko</td><td data-label="État"><span class="badge-status badge-status--success badge-status--dot">Disponible</span></td></tr>
-              <tr><td data-label="Document"><i class="fa-regular fa-file me-2" aria-hidden="true"></i>Attestation de travail</td><td data-label="Ajouté le"><span class="data-table__muted">15/06/2026</span></td><td data-label="Format">PDF • 95 Ko</td><td data-label="État"><span class="badge-status badge-status--success badge-status--dot">Disponible</span></td></tr>
+              <?php if (!$documents): ?><tr><td colspan="4">Aucun document disponible.</td></tr><?php endif; ?>
+              <?php foreach ($documents as $document): ?>
+              <tr><td data-label="Document"><a class="data-table__ref" href="/api/document_telecharger.php?id=<?= (int) $document['id'] ?>"><i class="fa-regular fa-file me-2" aria-hidden="true"></i><?= h($typesDocument[$document['type']] ?? 'Document') ?> — <?= h($document['nom_fichier']) ?></a></td><td data-label="Ajouté le"><span class="data-table__muted"><?= h((new DateTime($document['date_ajout']))->format('d/m/Y')) ?></span></td><td data-label="Format"><?= h(strtoupper(pathinfo($document['nom_fichier'], PATHINFO_EXTENSION))) ?></td><td data-label="État"><span class="badge-status badge-status--success badge-status--dot">Disponible</span></td></tr>
+              <?php endforeach; ?>
               </tbody>
             </table>
           </div>
-          <div class="app-form-actions">
-            <button type="button" class="btn btn-neutral"><i class="fa-solid fa-arrow-up-from-bracket me-2" aria-hidden="true"></i>Télécharger un document</button>
-          </div>
+          <p class="card-panel__note">Cliquez sur un document pour le télécharger. L’accès est vérifié à chaque téléchargement.</p>
         </section>
 
         <section class="card-panel">
@@ -74,8 +79,8 @@ if ($moi === null) {
               <caption class="visually-hidden">Demandes d’attestation</caption>
               <thead><tr><th scope="col">Référence</th><th scope="col">Type</th><th scope="col">Date</th><th scope="col">État</th></tr></thead>
               <tbody>
-              <tr><td data-label="Référence"><span class="data-table__ref">AT-0083</span></td><td data-label="Type"><span class="data-table__muted">Attestation de salaire</span></td><td data-label="Date">08/10/2026</td><td data-label="État"><span class="badge-status badge-status--warning">En attente RH</span></td></tr>
-              <tr><td data-label="Référence"><span class="data-table__ref">AT-0041</span></td><td data-label="Type"><span class="data-table__muted">Attestation de travail</span></td><td data-label="Date">14/06/2026</td><td data-label="État"><span class="badge-status badge-status--success">Validée</span></td></tr>
+              <?php if (!$demandes): ?><tr><td colspan="4">Aucune demande d’attestation.</td></tr><?php endif; ?>
+              <?php foreach ($demandes as $demande): ?><tr><td data-label="Référence"><span class="data-table__ref">AT-<?= str_pad((string) $demande['id'], 4, '0', STR_PAD_LEFT) ?></span></td><td data-label="Type"><span class="data-table__muted"><?= h($typesAttestation[$demande['type']] ?? $demande['type']) ?></span></td><td data-label="Date"><?= h((new DateTime($demande['date_demande']))->format('d/m/Y')) ?></td><td data-label="État"><span class="badge-status badge-status--<?= $demande['statut'] === 'en_attente' ? 'warning' : ($demande['statut'] === 'generee' ? 'success' : 'danger') ?>"><?= h($demande['statut'] === 'en_attente' ? 'En attente RH' : ($demande['statut'] === 'generee' ? 'Générée' : 'Refusée')) ?></span></td></tr><?php endforeach; ?>
               </tbody>
             </table>
           </div>
@@ -88,24 +93,19 @@ if ($moi === null) {
             <i class="fa-solid fa-circle-check me-1" aria-hidden="true"></i>Demande d’attestation envoyée. Elle apparaîtra dans la liste ci-dessus.
           </div>
 
-          <form id="form-attestation" class="needs-validation" novalidate data-confirmation="attestation-confirmation">
+          <form id="form-attestation" class="needs-validation" novalidate data-api="/api/demande_attestation_creer.php" data-confirmation="attestation-confirmation">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <div class="mb-3">
               <label for="type-attestation" class="form-label">Type d’attestation</label>
               <select id="type-attestation" name="type_attestation" class="form-select" required>
-                <option selected>Attestation de travail</option>
-                <option>Attestation de salaire</option>
+                <option value="attestation_travail">Attestation de travail</option>
+                <option value="attestation_salaire">Attestation de salaire</option>
               </select>
             </div>
 
             <div class="mb-3">
-              <label for="destinataire" class="form-label">Destinataire</label>
-              <input type="text" id="destinataire" name="destinataire" class="form-control" value="Banque de l’entreprise" required>
-              <div class="invalid-feedback">Indiquez le destinataire.</div>
-            </div>
-
-            <div class="mb-3">
               <label for="motif-attestation" class="form-label">Motif</label>
-              <textarea id="motif-attestation" name="motif" class="form-control" rows="3" required>Constitution de mon dossier administratif bancaire.</textarea>
+              <textarea id="motif-attestation" name="motif" class="form-control" rows="3" required></textarea>
               <div class="invalid-feedback">Indiquez le motif de votre demande.</div>
             </div>
 
@@ -113,23 +113,6 @@ if ($moi === null) {
               <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
               <span>La RH traite votre demande. Après validation, le document apparaît dans cette liste.</span>
             </div>
-
-            <fieldset class="upload-group">
-    <legend class="upload-group__legend">Justificatifs <span class="field-tag">Facultatifs</span></legend>
-    <p class="upload-group__intro">Vous pouvez joindre jusqu’à 2 pièces (PDF, JPG ou PNG, 5 Mo maximum chacune). Aucune n’est obligatoire.</p>
-    <div class="mb-3">
-      <label for="attestation-justificatif-1" class="form-label">Justificatif 1 <span class="field-tag">Optionnel</span></label>
-      <input type="file" id="attestation-justificatif-1" name="justificatif_1" class="form-control"
-             accept=".pdf,.jpg,.jpeg,.png" data-max-mb="5">
-      <div class="invalid-feedback">Fichier trop volumineux (5 Mo maximum).</div>
-    </div>
-    <div class="mb-0">
-      <label for="attestation-justificatif-2" class="form-label">Justificatif 2 <span class="field-tag">Optionnel</span></label>
-      <input type="file" id="attestation-justificatif-2" name="justificatif_2" class="form-control"
-             accept=".pdf,.jpg,.jpeg,.png" data-max-mb="5">
-      <div class="invalid-feedback">Fichier trop volumineux (5 Mo maximum).</div>
-    </div>
-  </fieldset>
 
             <button type="submit" class="btn btn-primary w-100"><i class="fa-regular fa-paper-plane me-2" aria-hidden="true"></i>Demander l’attestation</button>
           </form>

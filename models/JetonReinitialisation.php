@@ -63,7 +63,7 @@ class JetonReinitialisation
         $stmt = $this->pdo->prepare(
             'UPDATE jeton_reinitialisation SET utilise_le = NOW()
              WHERE utilisateur_id = :id AND jeton_hash = :hash
-               AND utilise_le IS NULL AND expire_le > NOW()'
+                AND utilise_le IS NULL AND expire_le > NOW()'
         );
         $stmt->execute([':id' => $utilisateurId, ':hash' => $jetonHash]);
         return $stmt->rowCount() === 1;

@@ -1,27 +1,27 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
 exigerRole(['rh']);
-require_once __DIR__ . '/donnees_demo_rh.php';
+require_once __DIR__ . '/../gestion/aides_journal.php';
 
 $espace = 'rh';
 $active = 'rh_journal';
 $pageTitle = 'Journal';
 $scripts = ['gestion.js'];
 
-$du = (string) ($_GET['du'] ?? '2026-09-24');
-$au = (string) ($_GET['au'] ?? '2026-10-09');
+$aujourdhui = new DateTime('today');
+$du = dateValide((string) ($_GET['du'] ?? ''), (clone $aujourdhui)->modify('-30 days')->format('Y-m-d'));
+$au = dateValide((string) ($_GET['au'] ?? ''), $aujourdhui->format('Y-m-d'));
 $auteurChoisi = (string) ($_GET['auteur'] ?? '');
 $actionChoisie = (string) ($_GET['action'] ?? '');
 
 $sousTitre = 'Traçabilité RH • Événements du ' . h(dateFr($du)) . ' au ' . h(dateFr($au));
 
-$entrees = array_filter($journalRh, fn($l) => substr($l['date'], 0, 10) >= $du
-    && substr($l['date'], 0, 10) <= $au
-    && ($auteurChoisi === '' || $l['auteur'] === $auteurChoisi)
-    && ($actionChoisie === '' || $l['action'] === $actionChoisie));
-
-$auteurs = array_unique(array_column($journalRh, 'auteur'));
-$actions = array_unique(array_column($journalRh, 'action'));
+$lecture = (new JournalService(new JournalAction($pdo)))->lire('rh', [
+    'du' => $du, 'au' => $au, 'action' => $actionChoisie,
+    'auteur_id' => ctype_digit($auteurChoisi) ? (int) $auteurChoisi : 0,
+    'page' => (int) ($_GET['page'] ?? 1),
+]);
+$entrees = $lecture['lignes'];
 
 include __DIR__ . '/../layout/debut_page.php';
 ?>
@@ -43,13 +43,15 @@ include __DIR__ . '/../layout/debut_page.php';
             <div class="filter-bar__field">
               <label for="jr-auteur" class="form-label">Auteur</label>
               <select id="jr-auteur" name="auteur" class="form-select" data-autosubmit>
-                <?= optionsSelect(['' => 'Tous les auteurs'] + array_combine($auteurs, $auteurs), $auteurChoisi) ?>
+                <?= optionsAuteurs($lecture['auteurs'], $auteurChoisi, 'Tous les auteurs') ?>
               </select>
             </div>
             <div class="filter-bar__field">
               <label for="jr-action" class="form-label">Action</label>
               <select id="jr-action" name="action" class="form-select" data-autosubmit>
-                <?= optionsSelect(['' => 'Toutes les actions RH'] + array_combine($actions, $actions), $actionChoisie) ?>
+                <?php $optionsActions = ['' => 'Toutes les actions RH'];
+                foreach ($lecture['actions'] as $codeAction) { $optionsActions[$codeAction] = actionJournal($codeAction)[0]; } ?>
+                <?= optionsSelect($optionsActions, $actionChoisie) ?>
               </select>
             </div>
             <noscript><button type="submit" class="btn btn-neutral">Filtrer</button></noscript>
@@ -79,10 +81,10 @@ include __DIR__ . '/../layout/debut_page.php';
                 <tbody>
                   <?php foreach ($entrees as $l): ?>
                   <tr>
-                    <td data-label="Horodatage"><?= h(dateHeureJournal($l['date'])) ?></td>
-                    <td data-label="Auteur"><?= h($l['auteur']) ?></td>
-                    <td data-label="Action"><?= h($l['action']) ?></td>
-                    <td data-label="Cible"><?= h($l['cible']) ?></td>
+                    <td data-label="Horodatage"><?= h(dateHeureJournal($l['date_heure'])) ?></td>
+                    <td data-label="Auteur"><?= h(nomAuteurJournal($l)) ?></td>
+                    <td data-label="Action"><?= h(actionJournal($l['action'])[0]) ?></td>
+                    <td data-label="Cible"><?= h(cibleJournal($l)) ?></td>
                   </tr>
                   <?php endforeach; ?>
                 </tbody>
@@ -90,7 +92,8 @@ include __DIR__ . '/../layout/debut_page.php';
             </div>
           <?php endif; ?>
 
-          <p class="card-panel__note"><?= count($entrees) ?> événement<?= count($entrees) > 1 ? 's' : '' ?> affiché<?= count($entrees) > 1 ? 's' : '' ?> • Les entrées sont en lecture seule, classées de la plus récente à la plus ancienne.</p>
+          <p class="card-panel__note"><?= (int) $lecture['total'] ?> événement<?= $lecture['total'] > 1 ? 's' : '' ?> • Les entrées sont en lecture seule, classées de la plus récente à la plus ancienne.</p>
+          <?php pagination($lecture); ?>
         </section>
 
         <div class="note-info" role="note">

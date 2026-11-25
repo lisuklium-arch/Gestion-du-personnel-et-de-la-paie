@@ -1,22 +1,25 @@
 <?php
 $estDg = $modeCompte === 'dg';
-$rolesProposes = $estDg ? $roles : array_values(array_diff($roles, ['Responsable RH']));
+$listeDepts = $pdo->query('SELECT id, nom FROM departement ORDER BY nom')->fetchAll(PDO::FETCH_KEY_PAIR);
+$listePostes = $pdo->query('SELECT p.id, p.intitule, pd.departement_id FROM poste p JOIN poste_departement pd ON pd.poste_id = p.id ORDER BY p.intitule')->fetchAll();
+$optionsRoles = $estDg ? ['employe' => 'Employé', 'rh' => 'RH'] : ['employe' => 'Employé'];
+$optionsContrat = ['CDI' => 'CDI', 'CDD' => 'CDD', 'stage' => 'Stage', 'prestation' => 'Prestation'];
 $noteCompte = $estDg
-    ? 'Un compte et un dossier distincts seront créés. Un compte Employé ou Chef de département est actif immédiatement. Un compte Responsable RH est créé en attente puis activé depuis « Comptes RH ».'
-    : 'Un compte et un dossier distincts seront créés. Le compte sera en attente puis activé par la RH. Seul le Directeur général peut créer un compte Responsable RH.';
-$messageCompte = $estDg
-    ? 'Dossier employé et compte de connexion créés. Le compte est actif.'
-    : 'Dossier employé et compte de connexion créés. Le compte est en attente d’activation.';
-$messageRoleRh = 'Dossier employé et compte Responsable RH créés. Le compte est en attente : activez-le depuis « Comptes RH ».';
+    ? 'Un compte et un dossier distincts seront créés. La création d’un compte RH est réservée au Directeur général. La nomination d’un chef de département est une décision distincte du DG.'
+    : 'Un compte Employé et son dossier sont créés. La nomination d’un chef de département est une décision distincte du DG.';
+$messageCompte = 'Dossier employé et compte de connexion créés. Le compte est actif : les accès ont été envoyés par e-mail.';
+$messageRoleRh = 'Dossier employé et compte RH créés. Le compte est en attente : activez-le depuis « Comptes RH ».';
 $aideRole = $estDg
-    ? 'Rôles : Employé, Chef de département, Responsable RH. Seul le Directeur général peut créer un compte Responsable RH.'
-    : 'Rôles : Employé, Chef de département. La création d’un compte Responsable RH est réservée au Directeur général.';
+    ? 'Rôles applicatifs : Employé ou RH. Le chef de département est une nomination distincte, validée par le DG.'
+    : 'Le nouveau dossier est créé avec le rôle Employé. La nomination d’un chef de département est validée par le DG.';
 ?>
         <div id="compte-confirmation" class="alert alert-success d-none card-panel--cd-form" role="status" aria-live="polite">
           <i class="fa-solid fa-circle-check me-1" aria-hidden="true"></i><span data-confirmation-label><?= h($messageCompte) ?></span>
         </div>
 
-        <form id="form-compte" class="needs-validation" novalidate data-confirmation="compte-confirmation" data-confirmation-text="<?= h($messageCompte) ?>" data-message-role-rh="<?= h($messageRoleRh) ?>" data-role-rh="Responsable RH">
+        <div id="compte-erreur" class="alert alert-danger d-none card-panel--cd-form" role="alert"></div>
+
+        <form id="form-compte" class="needs-validation" novalidate data-api="/api/compte_creer.php" enctype="multipart/form-data" data-confirmation="compte-confirmation" data-confirmation-text="<?= h($messageCompte) ?>" data-message-role-rh="<?= h($messageRoleRh) ?>" data-role-rh="rh">
           <div class="form-columns">
           <section class="card-panel">
             <div class="card-panel__head">
@@ -38,9 +41,21 @@ $aideRole = $estDg
             </div>
 
             <div class="mb-3">
+              <label for="compte-photo" class="form-label">Photo <span class="field-tag">Optionnel</span></label>
+              <input type="file" id="compte-photo" name="photo" class="form-control" accept=".jpg,.jpeg,.png" data-max-mb="2">
+              <div class="invalid-feedback">Photo JPG ou PNG, 2 Mo maximum.</div>
+            </div>
+
+            <div class="mb-3">
               <label for="compte-naissance" class="form-label">Date de naissance</label>
               <input type="date" id="compte-naissance" name="naissance" class="form-control" max="<?= $aujourdhui->format('Y-m-d') ?>" required>
               <div class="invalid-feedback">Indiquez une date de naissance valide.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="compte-piece" class="form-label">Pièce jointe au dossier <span class="field-tag">Optionnel</span></label>
+              <input type="file" id="compte-piece" name="piece_jointe" class="form-control" accept=".pdf,.jpg,.jpeg,.png" data-max-mb="5">
+              <div class="invalid-feedback">PDF, JPG ou PNG, 5 Mo maximum.</div>
             </div>
 
             <div class="mb-3">
@@ -65,17 +80,17 @@ $aideRole = $estDg
             <div class="form-row-2">
               <div class="mb-3">
                 <label for="compte-dept" class="form-label">Département</label>
-                <select id="compte-dept" name="departement" class="form-select" required>
+                <select id="compte-dept" name="departement_id" class="form-select" required>
                   <option value="" selected disabled>Choisir</option>
-                  <?= optionsSelect(array_combine(array_keys($departements), array_keys($departements))) ?>
+                  <?= optionsSelect($listeDepts) ?>
                 </select>
                 <div class="invalid-feedback">Choisissez un département.</div>
               </div>
               <div class="mb-3">
                 <label for="compte-poste" class="form-label">Poste</label>
-                <select id="compte-poste" name="poste" class="form-select" required>
+                <select id="compte-poste" name="poste_id" class="form-select" required>
                   <option value="" selected disabled>Choisir</option>
-                  <?= optionsSelect(array_combine(array_keys($postes), array_keys($postes))) ?>
+                  <?php foreach ($listePostes as $poste): ?><option value="<?= (int) $poste['id'] ?>" data-departement="<?= (int) $poste['departement_id'] ?>"><?= h($poste['intitule']) ?></option><?php endforeach; ?>
                 </select>
                 <div class="invalid-feedback">Choisissez un poste.</div>
               </div>
@@ -85,7 +100,7 @@ $aideRole = $estDg
               <label for="compte-role" class="form-label">Rôle</label>
               <select id="compte-role" name="role" class="form-select" required>
                 <option value="" selected disabled>Choisir</option>
-                <?= optionsSelect(array_combine($rolesProposes, $rolesProposes)) ?>
+                <?= optionsSelect($optionsRoles) ?>
               </select>
               <div class="invalid-feedback">Choisissez un rôle.</div>
               <p class="form-hint mb-0"><?= h($aideRole) ?></p>
@@ -102,7 +117,7 @@ $aideRole = $estDg
               <label for="compte-contrat" class="form-label">Type de contrat</label>
               <select id="compte-contrat" name="type_contrat" class="form-select" data-contrat-type="compte-fin" required>
                 <option value="" selected disabled>Choisir</option>
-                <?= optionsSelect(array_combine(array_keys($typesContrat), array_keys($typesContrat))) ?>
+                <?= optionsSelect($optionsContrat) ?>
               </select>
               <div class="invalid-feedback">Choisissez un type de contrat.</div>
             </div>
