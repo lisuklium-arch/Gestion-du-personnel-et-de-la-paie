@@ -48,3 +48,5 @@ function h($valeur): string
 }
 
 $pdo = require __DIR__ . '/db.php';
+
+ 
