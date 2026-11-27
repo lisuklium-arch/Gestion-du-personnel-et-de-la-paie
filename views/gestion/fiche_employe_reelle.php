@@ -19,6 +19,9 @@ if ($employe === null) {
 $contrat = (new Contrat($pdo))->getContratEnCours((int) $employe['id']);
 $documents = (new DocumentEmploye($pdo))->listerPourEmploye((int) $employe['id']);
 $sousTitre = h($employe['prenom'] . ' ' . $employe['nom']) . ' • ' . h($employe['matricule']) . ' • ' . h($employe['poste']) . ' • ' . h($employe['departement']);
+if (($espace ?? '') === 'rh') {
+    $scripts[] = 'matricule-correction.js';
+}
 include __DIR__ . '/../layout/debut_page.php';
 ?>
 <div class="duo">
@@ -31,5 +34,18 @@ include __DIR__ . '/../layout/debut_page.php';
   </dl></section>
 </div>
 <section class="card-panel"><div class="card-panel__head"><h2 class="card-panel__title">Documents du dossier</h2></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Document</th><th>Date</th><th>Accès</th></tr></thead><tbody><?php if (!$documents): ?><tr><td colspan="3">Aucun document.</td></tr><?php endif; ?><?php foreach ($documents as $document): ?><tr><td><?= h($document['nom_fichier']) ?></td><td><?= h((new DateTime($document['date_ajout']))->format('d/m/Y')) ?></td><td><a class="data-table__ref" href="/api/document_telecharger.php?id=<?= (int) $document['id'] ?>">Télécharger</a></td></tr><?php endforeach; ?></tbody></table></div></section>
+<?php if (($espace ?? '') === 'rh'): ?>
+<section class="card-panel card-panel--form"><div class="card-panel__head"><span class="icon-tile icon-tile--sm icon-tile--warning"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></span><h2 class="card-panel__title">Correction exceptionnelle du matricule</h2></div>
+  <p class="card-panel__note">Réservé à la RH. L’ancien matricule restera définitivement indisponible.</p>
+  <div id="correction-matricule-retour" class="alert d-none" role="status"></div>
+  <form id="form-correction-matricule" class="needs-validation" novalidate>
+    <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="employe_id" value="<?= (int) $employe['id'] ?>">
+    <label for="correction-matricule" class="form-label">Nouveau matricule</label>
+    <input id="correction-matricule" name="matricule" class="form-control" value="<?= h($employe['matricule']) ?>" pattern="EMP-[0-9]{4}" maxlength="8" required>
+    <div class="invalid-feedback">Format attendu : EMP-0000.</div>
+    <div class="app-form-actions"><button type="submit" class="btn btn-danger-outline">Corriger le matricule</button></div>
+  </form>
+</section>
+<?php endif; ?>
 <div class="app-actions"><a href="<?= h($listeUrl) ?>" class="btn btn-neutral text-decoration-none">Retour aux employés</a></div>
 <?php include __DIR__ . '/../layout/fin_page.php'; ?>

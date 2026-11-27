@@ -83,7 +83,6 @@ $historiqueResidence = (new DemandeModification($pdo))->listerLieuResidencePourE
               <select id="champ-concerne" name="champ" class="form-select" required>
                 <option value="nom" data-type="text" data-ancienne="<?= h($moi['nom']) ?>">Nom</option>
                 <option value="prenom" data-type="text" data-ancienne="<?= h($moi['prenom']) ?>">Prénom</option>
-                <option value="matricule" data-type="text" data-ancienne="<?= h($moi['matricule']) ?>">Matricule</option>
                 <option value="date_naissance" data-type="date" data-ancienne="<?= h((string) $moi['date_naissance']) ?>">Date de naissance</option>
                 <option value="telephone" data-type="tel" data-ancienne="<?= h((string) $moi['telephone']) ?>">Téléphone</option>
                 <option value="lieu_residence" data-type="text" data-minlength="3" data-maxlength="255" data-ancienne="<?= h((string) $moi['lieu_residence']) ?>">Lieu de résidence</option>

@@ -75,7 +75,11 @@
       }).then(function (reponse) {
         return reponse.json().catch(function () { return {}; }).then(function (json) {
           if (reponse.ok && json.ok !== false) {
-            succes(json.statut === 'en_attente' ? form.getAttribute('data-message-role-rh') : '');
+            var message = json.statut === 'en_attente' ? form.getAttribute('data-message-role-rh') : '';
+            if (json.matricule) {
+              message = (message || json.message || form.getAttribute('data-confirmation-text') || 'Dossier créé.') + ' Matricule attribué : ' + json.matricule + '.';
+            }
+            succes(message);
             form.querySelectorAll('input, select, button').forEach(function (el) { el.disabled = true; });
           } else {
             echec(json.message || (reponse.status === 403 ? 'Session expirée ou accès refusé. Rechargez la page.' : 'Une erreur est survenue.'));

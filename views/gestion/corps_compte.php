@@ -78,9 +78,8 @@ $aideRole = $estDg
                 <div class="invalid-feedback">Indiquez un numéro de téléphone valide.</div>
               </div>
               <div class="mb-3">
-                <label for="compte-matricule" class="form-label">Matricule</label>
-                <input type="text" id="compte-matricule" name="matricule" class="form-control" pattern="EMP-[0-9]{4}" placeholder="EMP-0073" required>
-                <div class="invalid-feedback">Format attendu : EMP-0000.</div>
+                <label class="form-label">Matricule</label>
+                <p class="form-control-plaintext mb-0">Attribué automatiquement après la création du dossier.</p>
               </div>
             </div>
 

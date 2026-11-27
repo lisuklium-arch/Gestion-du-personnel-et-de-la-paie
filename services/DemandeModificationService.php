@@ -8,7 +8,7 @@ require_once __DIR__ . '/NotificationService.php';
 
 class DemandeModificationService
 {
-    private const CHAMPS = ['nom', 'prenom', 'matricule', 'date_naissance', 'telephone', 'lieu_residence'];
+    private const CHAMPS = ['nom', 'prenom', 'date_naissance', 'telephone', 'lieu_residence'];
 
     public function __construct(
         private PDO $pdo,
@@ -122,9 +122,6 @@ class DemandeModificationService
         return match ($champ) {
             'nom', 'prenom' => ($valeur === '' || mb_strlen($valeur) > 100)
                 ? 'Cette valeur est obligatoire et limitée à 100 caractères.' : null,
-            'matricule' => !preg_match('/^EMP-[0-9]{4}$/', $valeur)
-                ? 'Matricule invalide (format EMP-0000).'
-                : ($this->employes->matriculeExistePourAutre($valeur, $employeId) ? 'Ce matricule est déjà utilisé.' : null),
             'date_naissance' => !$this->estDateValide($valeur) || $valeur > date('Y-m-d')
                 ? 'Date de naissance invalide.' : null,
             'telephone' => !preg_match('/^\+?[0-9 ]{8,20}$/', $valeur)
@@ -159,6 +156,6 @@ class DemandeModificationService
 
     public static function libelleChamp(string $champ): string
     {
-        return ['nom' => 'nom', 'prenom' => 'prénom', 'matricule' => 'matricule', 'date_naissance' => 'date de naissance', 'telephone' => 'téléphone', 'lieu_residence' => 'lieu de résidence'][$champ] ?? $champ;
+        return ['nom' => 'nom', 'prenom' => 'prénom', 'date_naissance' => 'date de naissance', 'telephone' => 'téléphone', 'lieu_residence' => 'lieu de résidence'][$champ] ?? $champ;
     }
 }

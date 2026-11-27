@@ -5,6 +5,7 @@ require_once __DIR__ . '/../models/Contrat.php';
 require_once __DIR__ . '/../models/DocumentEmploye.php';
 require_once __DIR__ . '/CompteService.php';
 require_once __DIR__ . '/JournalService.php';
+require_once __DIR__ . '/MatriculeService.php';
 
 class NouvelEmployeService
 {
@@ -16,6 +17,7 @@ class NouvelEmployeService
     private Employe $employes;
     private Contrat $contrats;
     private JournalService $journalService;
+    private MatriculeService $matricules;
     private string $dossierContrats;
     private string $dossierDocuments;
 
@@ -25,6 +27,7 @@ class NouvelEmployeService
         Employe $employes,
         Contrat $contrats,
         JournalService $journalService,
+        MatriculeService $matricules,
         string $dossierContrats,
         string $dossierDocuments
     ) {
@@ -33,6 +36,7 @@ class NouvelEmployeService
         $this->employes = $employes;
         $this->contrats = $contrats;
         $this->journalService = $journalService;
+        $this->matricules = $matricules;
         $this->dossierContrats = rtrim($dossierContrats, '/\\');
         $this->dossierDocuments = rtrim($dossierDocuments, '/\\');
     }
@@ -58,10 +62,6 @@ class NouvelEmployeService
             return ['ok' => false, 'message' => $erreur];
         }
 
-        if ($this->employes->matriculeExiste($d['matricule'])) {
-            return ['ok' => false, 'message' => 'Ce matricule est déjà utilisé.'];
-        }
-
         $fichiersEnregistres = [];
         $this->pdo->beginTransaction();
 
@@ -72,7 +72,9 @@ class NouvelEmployeService
                 return $compte;
             }
 
+            $d['matricule'] = $this->matricules->prochainDansTransaction();
             $employeId = $this->employes->creer($compte['utilisateur_id'], $d);
+            $this->matricules->enregistrerAttributionDansTransaction($employeId, $d['matricule'], (int) $auteur['id']);
 
             $d['fichier_chemin'] = null;
             if ($fichierContrat !== null) {
@@ -117,7 +119,7 @@ class NouvelEmployeService
         } catch (PDOException $e) {
             $this->annuler($fichiersEnregistres);
             if ($e->getCode() === '23000') {
-                return ['ok' => false, 'message' => 'Département, poste, matricule ou e-mail invalide ou déjà utilisé.'];
+                return ['ok' => false, 'message' => 'Département, poste, e-mail ou matricule invalide ou déjà utilisé.'];
             }
             throw $e;
         } catch (Throwable $e) {
@@ -137,6 +139,7 @@ class NouvelEmployeService
                 : $compte['message'],
             'utilisateur_id' => $compte['utilisateur_id'],
             'employe_id' => $employeId,
+            'matricule' => $d['matricule'],
             'statut' => $compte['statut'],
         ];
     }
@@ -179,12 +182,6 @@ class NouvelEmployeService
         $lieuResidence = preg_replace('/\s+/u', ' ', $texte('lieu_residence')) ?? '';
         if (mb_strlen($lieuResidence) < 3 || mb_strlen($lieuResidence) > 255) {
             $erreur = 'Le lieu de résidence est obligatoire et doit contenir entre 3 et 255 caractères.';
-            return null;
-        }
-
-        $matricule = $texte('matricule');
-        if (!preg_match('/^EMP-[0-9]{4}$/', $matricule)) {
-            $erreur = 'Matricule invalide (format EMP-0000).';
             return null;
         }
 
@@ -257,7 +254,6 @@ class NouvelEmployeService
             'email' => $texte('email'),
             'telephone' => $telephone,
             'lieu_residence' => $lieuResidence,
-            'matricule' => $matricule,
             'departement_id' => $departementId,
             'poste_id' => $posteId,
             'role' => $role,

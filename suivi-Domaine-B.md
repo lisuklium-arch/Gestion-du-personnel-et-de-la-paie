@@ -316,3 +316,24 @@ Constat effectué le 23 novembre 2026, sans modification fonctionnelle :
 - Traçabilité : la demande conserve valeurs, dates, statut, RH traitante et
   motif de refus. Les actions sont également visibles dans le journal RH.
 - État : implémenté — à tester.
+
+### 27 novembre 2026 — Matricules automatiques et correction RH exceptionnelle
+- Objectif : retirer la saisie manuelle des matricules, générer un matricule
+  système `EMP-XXXX` et conserver toute valeur attribuée, même après sortie ou
+  correction administrative.
+- Migration ajoutée : `database/migrations/20261127_004_matricules_automatiques.sql`.
+  Elle crée `compteur_matricule` et `historique_matricule`, réserve tous les
+  matricules existants et initialise le compteur sur le premier numéro libre.
+  Elle a été appliquée localement : prochain matricule `EMP-0006`.
+- Fichiers ajoutés : `services/MatriculeService.php`, endpoint et script de
+  correction RH. Fichiers modifiés : création de compte, modèle employé,
+  profil de modification, fiche RH, journal, schéma et suivi.
+- Règles : le navigateur ne peut plus fournir de matricule à la création ; le
+  compteur est verrouillé avec `FOR UPDATE` dans la transaction du dossier. La
+  contrainte unique existante sur `employe.matricule` est conservée et l’historique
+  réserve définitivement chaque valeur. Les matricules exceptionnels élevés
+  n’influencent pas le compteur séquentiel.
+- Droits : le matricule n’est plus un champ de demande de modification. Une
+  correction distincte est réservée à la RH depuis la fiche employé, avec
+  contrôle de format, unicité historique et journalisation ancien/nouveau.
+- État : implémenté — à tester.

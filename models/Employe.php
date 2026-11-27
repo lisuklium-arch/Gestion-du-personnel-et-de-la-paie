@@ -134,6 +134,13 @@ class Employe
         $stmt->execute([':chemin' => $cheminPrive, ':id' => $employeId]);
     }
 
+    /** Réservé au flux RH de correction administrative du matricule. */
+    public function mettreAJourMatricule(int $employeId, string $matricule): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE employe SET matricule = :matricule WHERE id = :id');
+        $stmt->execute([':matricule' => $matricule, ':id' => $employeId]);
+    }
+
     public function creer(int $utilisateurId, array $d): int
     {
         $stmt = $this->pdo->prepare(

@@ -14,6 +14,7 @@ $service = new NouvelEmployeService(
     new Employe($pdo),
     new Contrat($pdo),
     $journal,
+    new MatriculeService($pdo, new Employe($pdo), $journal),
     __DIR__ . '/../storage/contrats',
     __DIR__ . '/../storage/documents'
 );
@@ -29,5 +30,6 @@ reponseJson(201, [
     'message' => $resultat['message'],
     'utilisateur_id' => $resultat['utilisateur_id'],
     'employe_id' => $resultat['employe_id'],
+    'matricule' => $resultat['matricule'],
     'statut' => $resultat['statut'],
 ]);

@@ -65,6 +65,7 @@ CREATE TABLE employe (
     prenom          VARCHAR(100) NOT NULL,
     date_naissance  DATE NULL,
     telephone       VARCHAR(30) NULL,
+      lieu_residence  VARCHAR(255) NULL,
     photo_chemin    VARCHAR(255) NULL,
     date_embauche   DATE NOT NULL,
     statut          ENUM('actif','suspendu','sorti') NOT NULL DEFAULT 'actif',
@@ -84,6 +85,31 @@ CREATE TABLE employe (
     CONSTRAINT fk_employe_poste FOREIGN KEY (poste_id)
         REFERENCES poste (id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
+  CREATE TABLE historique_matricule (
+      id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      employe_id          INT UNSIGNED NOT NULL,
+      matricule           VARCHAR(20) NOT NULL,
+      type_action         ENUM('attribution_initiale','correction_exceptionnelle') NOT NULL,
+      ancien_matricule    VARCHAR(20) NULL,
+      effectue_par_id     INT UNSIGNED NULL,
+      date_action         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_historique_matricule (matricule),
+      KEY idx_historique_matricule_employe (employe_id, date_action),
+      CONSTRAINT fk_historique_matricule_employe FOREIGN KEY (employe_id)
+          REFERENCES employe (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+      CONSTRAINT fk_historique_matricule_auteur FOREIGN KEY (effectue_par_id)
+          REFERENCES utilisateur (id) ON DELETE SET NULL ON UPDATE CASCADE
+  ) ENGINE=InnoDB;
+
+  CREATE TABLE compteur_matricule (
+      id                  TINYINT UNSIGNED NOT NULL,
+      prochain_numero     SMALLINT UNSIGNED NOT NULL,
+      PRIMARY KEY (id),
+      CONSTRAINT ck_compteur_matricule_id CHECK (id = 1),
+      CONSTRAINT ck_compteur_matricule_plage CHECK (prochain_numero BETWEEN 1 AND 10000)
+  ) ENGINE=InnoDB;
 
 ALTER TABLE departement
     ADD CONSTRAINT fk_departement_chef FOREIGN KEY (chef_id)

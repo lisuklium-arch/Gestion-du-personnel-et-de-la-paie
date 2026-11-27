@@ -38,7 +38,7 @@ include __DIR__ . '/../layout/debut_page.php';
                 <?php foreach ($demandesModification as $demande): ?>
                   <tr data-demande-modification="<?= (int) $demande['id'] ?>">
                     <td data-label="Employé"><div class="cell-person"><?= avatarEmploye($demande, 'sm') ?><div><p class="cell-person__name"><?= h($demande['prenom'] . ' ' . $demande['nom']) ?></p><p class="cell-person__meta"><?= h($demande['matricule'] . ' • ' . $demande['departement'] . ' • ' . $demande['poste']) ?></p></div></div></td>
-                    <td data-label="Champ"><?= h(['nom' => 'Nom', 'prenom' => 'Prénom', 'matricule' => 'Matricule', 'date_naissance' => 'Date de naissance', 'telephone' => 'Téléphone', 'lieu_residence' => 'Lieu de résidence'][$demande['champ']] ?? $demande['champ']) ?></td>
+                    <td data-label="Champ"><?= h(['nom' => 'Nom', 'prenom' => 'Prénom', 'date_naissance' => 'Date de naissance', 'telephone' => 'Téléphone', 'lieu_residence' => 'Lieu de résidence'][$demande['champ']] ?? $demande['champ']) ?></td>
                     <td data-label="Valeur demandée"><span class="data-table__muted"><?= h((string) $demande['ancienne_valeur']) ?></span> → <?= h($demande['nouvelle_valeur']) ?></td>
                     <td data-label="Motif"><?= h((string) $demande['motif']) ?></td>
                     <td data-label="Décision">
