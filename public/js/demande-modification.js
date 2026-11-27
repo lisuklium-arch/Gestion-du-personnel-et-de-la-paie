@@ -12,6 +12,8 @@
     var option = champ.options[champ.selectedIndex];
     ancienneValeur.value = option.getAttribute('data-ancienne') || '';
     nouvelleValeur.type = option.getAttribute('data-type') || 'text';
+    nouvelleValeur.minLength = parseInt(option.getAttribute('data-minlength') || '0', 10);
+    nouvelleValeur.maxLength = parseInt(option.getAttribute('data-maxlength') || '524288', 10);
     nouvelleValeur.value = '';
   }
 

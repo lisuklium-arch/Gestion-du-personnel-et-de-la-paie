@@ -12,6 +12,17 @@
 
         input.setCustomValidity(tooBig ? 'Fichier trop volumineux.' : '');
         input.classList.toggle('is-invalid', tooBig);
+
+        var apercu = document.getElementById(input.id + '-apercu');
+        if (apercu) {
+          if (file && !tooBig && file.type.indexOf('image/') === 0) {
+            apercu.src = URL.createObjectURL(file);
+            apercu.classList.remove('d-none');
+          } else {
+            apercu.removeAttribute('src');
+            apercu.classList.add('d-none');
+          }
+        }
       });
     });
 

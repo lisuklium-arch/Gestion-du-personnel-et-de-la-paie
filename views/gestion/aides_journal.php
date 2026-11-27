@@ -23,6 +23,9 @@ const ACTIONS_JOURNAL = [
     'modification_departement'   => ['Département modifié', 'neutral'],
     'creation_poste'            => ['Poste créé', 'success'],
     'modification_poste'        => ['Poste modifié', 'neutral'],
+    'modification_photo_profil' => ['Photo de profil modifiée', 'neutral'],
+    'demande_modification'      => ['Demande de modification déposée', 'neutral'],
+    'traitement_demande_modification' => ['Demande de modification traitée', 'neutral'],
     'creation_type_conge'       => ['Type de congé créé', 'success'],
     'modification_type_conge'   => ['Type de congé modifié', 'neutral'],
 ];

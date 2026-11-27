@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
 require_once __DIR__ .'/../../models/Employe.php';
+require_once __DIR__ . '/../../services/RappelPhotoProfilService.php';
 exigerRole(['employe', 'chef', 'rh']);
 
 $moi = (new Employe($pdo))->trouverParUtilisateurId((int) $_SESSION['utilisateur_id']);
@@ -8,6 +9,9 @@ if ($moi === null) {
     http_response_code(404);
     exit('Aucun dossier employé n\'est associé à ce compte.');
 }
+$rappelPhoto = new RappelPhotoProfilService($pdo, new NotificationService(new Notification($pdo), new Utilisateur($pdo), new MailService($cfg['mail'])));
+$photoManquante = $rappelPhoto->doitAfficher((int) $moi['id'], $moi['photo_chemin'] ?? null);
+if ($photoManquante) $rappelPhoto->notifierSiNecessaire((int) $moi['id'], (int) $_SESSION['utilisateur_id']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -53,6 +57,8 @@ if ($moi === null) {
           <p class="app-greeting__text">Retrouvez vos congés, votre dernière fiche de paie et le suivi de vos demandes.
           </p>
         </section>
+
+        <?php if ($photoManquante): ?><section class="note-info note-info--warning" id="rappel-photo" role="note"><i class="fa-solid fa-camera" aria-hidden="true"></i><div><p><strong>Ajoutez votre photo de profil</strong></p><p>Elle facilite votre identification dans les listes et l’organigramme.</p><a href="profil_employe.php" class="btn btn-neutral text-decoration-none">Ajouter ma photo</a> <button type="button" class="btn btn-neutral" id="masquer-rappel-photo">Me le rappeler plus tard</button></div></section><?php endif; ?>
 
         <section class="app-kpis" aria-label="Indicateurs">
           <article class="card-panel kpi-card">
@@ -129,6 +135,7 @@ if ($moi === null) {
   <?php include __DIR__ . '/../layout/navbar_mobile.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/public/js/rappel-photo.js"></script>
 </body>
 
 </html>

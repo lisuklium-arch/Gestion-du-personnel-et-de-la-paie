@@ -5,6 +5,15 @@
       event.preventDefault();
       var bouton = event.submitter;
       if (!bouton) { return; }
+      var motifRefus = form.querySelector('[data-motif-refus]');
+      if (bouton.value === 'refusee' && (!motifRefus || !motifRefus.value.trim())) {
+        if (motifRefus) {
+          motifRefus.setCustomValidity('Le motif de refus est obligatoire.');
+          motifRefus.reportValidity();
+        }
+        return;
+      }
+      if (motifRefus) { motifRefus.setCustomValidity(''); }
       var donnees = new FormData(form);
       donnees.set('decision', bouton.value);
       form.querySelectorAll('button').forEach(function (element) { element.disabled = true; });

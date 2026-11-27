@@ -1,0 +1,1 @@
+(function () {'use strict'; var bouton=document.getElementById('masquer-rappel-photo'); if(!bouton)return; bouton.addEventListener('click',function(){fetch('/api/rappel_photo_masquer.php',{method:'POST',headers:{'X-CSRF-Token':document.querySelector('meta[name="csrf"]').content}}).then(function(){document.getElementById('rappel-photo').remove();});});})();

@@ -24,7 +24,7 @@ class DemandeDocument
     {
         return $this->pdo->query(
             "SELECT dd.id, dd.type, dd.motif, dd.date_demande, e.id AS employe_id,
-                    e.utilisateur_id, e.matricule, e.nom, e.prenom, e.departement_id,
+                    e.utilisateur_id, e.matricule, e.nom, e.prenom, e.photo_chemin, e.departement_id,
                     d.nom AS departement, p.intitule AS poste
              FROM demande_document dd
              JOIN employe e ON e.id = dd.employe_id

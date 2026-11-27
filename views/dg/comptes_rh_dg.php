@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../config/init.php';
 exigerRole(['dg']);
 require_once __DIR__ . '/../gestion/aides_gestion.php';
+require_once __DIR__ . '/../gestion/avatar.php';
 require_once __DIR__ . '/../gestion/bouton_compte.php';
 require_once __DIR__ . '/../../models/Utilisateur.php';
 require_once __DIR__ . '/../../services/CompteService.php';
@@ -102,7 +103,7 @@ include __DIR__ . '/../layout/debut_page.php';
                 <tr<?= $classe !== '' ? ' class="' . $classe . '"' : '' ?> data-compte="<?= h($c['nom_affiche']) ?>" data-id="<?= $cle ?>">
                   <td data-label="Compte">
                     <div class="cell-person">
-                      <span class="avatar avatar--sm" aria-hidden="true"><?= h(initiales($c['nom_affiche'])) ?></span>
+                      <?= avatarEmploye($c, 'sm') ?>
                       <div>
                         <p class="cell-person__name"><a class="data-table__ref" href="?<?= h(http_build_query($filtres + ['compte' => $cle])) ?>#detail-compte"<?= $cle === $choisi ? ' aria-current="true"' : '' ?>><?= h($c['nom_affiche']) ?></a></p>
                         <?php if ($cle === $choisi): ?><p class="cell-person__meta">Sélectionné</p><?php endif; ?>

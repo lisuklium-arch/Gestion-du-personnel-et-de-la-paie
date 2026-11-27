@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../config/init.php';
 require_once __DIR__ . '/../../models/Employe.php';
+require_once __DIR__ . '/../../models/DemandeModification.php';
+require_once __DIR__ . '/../gestion/avatar.php';
 exigerRole(['employe', 'chef', 'rh']);
 
 $employes = new Employe($pdo);
@@ -10,6 +12,7 @@ if ($moi === null) {
     http_response_code(404);
     exit('Aucun dossier employé n’est associé à ce compte.');
 }
+$historiqueResidence = (new DemandeModification($pdo))->listerLieuResidencePourEmploye((int) $moi['id']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -54,7 +57,7 @@ if ($moi === null) {
 
       <main class="app-content">
         <p class="app-meta app-meta--chips">
-          <span class="avatar avatar--sm" aria-hidden="true"><?= h(strtoupper(mb_substr($moi['prenom'], 0, 1) . mb_substr($moi['nom'], 0, 1))) ?></span>
+          <?= avatarEmploye($moi, 'sm') ?>
           <span><?= h($moi['prenom'] . ' ' . $moi['nom']) ?></span>
           <span class="chip chip--success"><?= h($moi['matricule']) ?></span>
           <span>Mise à jour du dossier personnel</span>
@@ -83,6 +86,7 @@ if ($moi === null) {
                 <option value="matricule" data-type="text" data-ancienne="<?= h($moi['matricule']) ?>">Matricule</option>
                 <option value="date_naissance" data-type="date" data-ancienne="<?= h((string) $moi['date_naissance']) ?>">Date de naissance</option>
                 <option value="telephone" data-type="tel" data-ancienne="<?= h((string) $moi['telephone']) ?>">Téléphone</option>
+                <option value="lieu_residence" data-type="text" data-minlength="3" data-maxlength="255" data-ancienne="<?= h((string) $moi['lieu_residence']) ?>">Lieu de résidence</option>
               </select>
             </div>
 
@@ -122,6 +126,18 @@ if ($moi === null) {
               <a href="profil_employe.php" class="btn btn-neutral text-decoration-none">Annuler</a>
             </div>
           </form>
+        </section>
+
+        <section class="card-panel">
+          <div class="card-panel__head"><span class="icon-tile icon-tile--sm"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span><h2 class="card-panel__title">Mes demandes de lieu de résidence</h2></div>
+          <?php if (!$historiqueResidence): ?>
+            <p class="mb-0">Aucune demande de modification du lieu de résidence.</p>
+          <?php else: ?>
+            <div class="table-scroll" tabindex="0" role="region" aria-label="Historique des demandes de lieu de résidence"><table class="data-table"><thead><tr><th>Demandée le</th><th>Valeur demandée</th><th>Statut</th><th>Décision RH</th></tr></thead><tbody>
+            <?php foreach ($historiqueResidence as $demande): $libelleStatut = ['en_attente' => 'En attente', 'acceptee' => 'Acceptée', 'refusee' => 'Refusée'][$demande['statut']] ?? $demande['statut']; ?>
+              <tr><td><?= h((new DateTime($demande['date_demande']))->format('d/m/Y H:i')) ?></td><td><span class="data-table__muted"><?= h((string) $demande['ancienne_valeur']) ?></span> → <?= h($demande['nouvelle_valeur']) ?></td><td><?= h($libelleStatut) ?></td><td><?php if ($demande['statut'] === 'en_attente'): ?>—<?php elseif ($demande['statut'] === 'refusee'): ?><strong>Refusée</strong><br><span class="data-table__muted"><?= h((string) $demande['motif_rejet']) ?></span><?php else: ?>Acceptée<?= $demande['date_traitement'] ? ' le ' . h((new DateTime($demande['date_traitement']))->format('d/m/Y')) : '' ?><?php endif; ?></td></tr>
+            <?php endforeach; ?></tbody></table></div>
+          <?php endif; ?>
         </section>
       </main>
     </div>

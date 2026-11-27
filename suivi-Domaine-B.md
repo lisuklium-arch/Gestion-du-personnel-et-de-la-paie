@@ -135,6 +135,23 @@ Constat effectué le 23 novembre 2026, sans modification fonctionnelle :
 - La proposition de nomination de chef sera raccordée au flux DG séparé dans
   l’étape suivante.
 
+### 25 novembre 2026 — Photos de profil et organigramme réel
+- Migration créée et appliquée : `20261125_002_rappel_photo_profil.sql` pour
+  suivre les anciens dossiers qui n’ont pas encore de photo.
+- Création : la photo est désormais obligatoire, JPG/PNG valide, 2 Mo maximum,
+  avec aperçu dans le formulaire.
+- Profil : un employé peut remplacer uniquement sa propre photo ; le
+  remplacement est journalisé.
+- Affichage : endpoint privé `api/photo_profil.php`, composant réutilisable
+  `avatarEmploye()` et images recadrées en cercle.
+- Listes : la liste RH/DG et la recherche dynamique utilisent la photo réelle
+  lorsqu’elle est disponible.
+- Organigramme : l’écran utilise `departement`, `chef_id`, employés actifs,
+  postes et photos de la base, sans données fictives.
+- Rappels : les anciens comptes sans photo reçoivent une notification et un
+  encart de tableau de bord masquable sept jours ; l’ajout d’une photo résout
+  automatiquement le rappel et marque la notification comme lue.
+
 ### 23 novembre 2026 — Correction de la recherche des dossiers RH
 - Objectif : rétablir la recherche « Nom, matricule ou e-mail » de la liste
   des employés.
@@ -235,4 +252,67 @@ Constat effectué le 23 novembre 2026, sans modification fonctionnelle :
 - Sécurité : chemin privé vérifié par liste blanche, contrôle de propriété à
   chaque téléchargement, RH/DG autorisés, stockage hors de `public`.
 - Dépendance : PhpWord 1.4 installé après activation des extensions ZIP/GD.
+- État : implémenté — à tester.
+
+### 25 novembre 2026 — Photos de profil obligatoires et rappels des dossiers incomplets
+- Objectif : rendre la photo obligatoire lors de la création d’un dossier,
+  permettre à chaque employé de remplacer uniquement sa propre photo et assurer
+  son affichage cohérent dans les écrans réels du Domaine B.
+- Migration ajoutée : `database/migrations/20261125_002_rappel_photo_profil.sql`.
+  Elle crée `rappel_photo_profil` et initialise un suivi pour les anciens
+  dossiers qui n’ont pas encore de photo. Cette migration a été appliquée sur
+  la base locale de test.
+- Fichiers ajoutés : `services/PhotoProfilService.php`,
+  `services/RappelPhotoProfilService.php`, `api/photo_profil.php`,
+  `api/photo_profil_remplacer.php`, `api/rappel_photo_masquer.php`,
+  `views/gestion/avatar.php`, `public/js/photo-profil.js` et
+  `public/js/rappel-photo.js`.
+- Fichiers modifiés : création de compte, profil employé, accueil employé,
+  listes de dossiers RH/DG, fiches réelles et files RH de demandes de
+  modification ou d’attestation, ainsi que les styles et scripts de prévisualisation.
+- Sécurité : images JPEG/PNG contrôlées côté serveur (2 Mo maximum), stockage
+  privé avec un nom interne aléatoire, téléchargement via endpoint authentifié,
+  et suppression sécurisée de l’ancienne image après remplacement. La création
+  d’un dossier est refusée sans photo valide.
+- Rappels : un ancien dossier sans photo reçoit une notification au plus une fois
+  tous les sept jours et un encart discret sur son tableau de bord. L’encart peut
+  être reporté sept jours ; photo enregistrée = rappel résolu et notifications
+  correspondantes lues.
+- Traçabilité : chaque remplacement est inscrit dans `journal_action` avec le
+  libellé « Photo de profil modifiée » ; il est donc consultable et filtrable
+  dans le journal RH existant. Les RH peuvent également repérer les dossiers
+  incomplets dans la liste des employés.
+- État : implémenté — à tester.
+
+### 25 novembre 2026 — Organigramme réel
+- Objectif : remplacer les données fictives de l’organigramme par la structure
+  effectivement stockée dans la base.
+- Fichiers modifiés : `models/Employe.php` et
+  `views/employe/organigramme_employe.php`.
+- Données lues : `departement`, la désignation éventuelle `departement.chef_id`,
+  `employe` et `poste`. Aucune écriture ni modification des règles des domaines
+  A, C ou D.
+- Comportement : les départements, effectifs, chefs désignés et membres actifs
+  sont lus au chargement de la page. Les photos de profil y utilisent le même
+  composant protégé que les autres écrans du Domaine B.
+- État : implémenté — à tester.
+
+### 25 novembre 2026 — Lieu de résidence et validation RH
+- Objectif : enregistrer un lieu de résidence officiel dans le dossier employé
+  et soumettre toute modification à une décision RH.
+- Migration ajoutée : `database/migrations/20261125_003_lieu_residence.sql`.
+  Elle ajoute `employe.lieu_residence` et `demande_modification.motif_rejet`
+  sans modifier les anciens dossiers. Elle a été appliquée à la base locale.
+- Fichiers modifiés : création de compte, modèle `Employe`, service et modèle
+  des demandes de modification, endpoints, profil employé, fiche réelle, file
+  RH, scripts JavaScript et journal RH.
+- Règles : le lieu de résidence est requis à la création (3 à 255 caractères),
+  mais demeure nullable en base pour préserver les données existantes. Une
+  demande en attente par employé et par champ est autorisée ; la valeur
+  officielle reste inchangée jusqu’à l’acceptation.
+- Notifications et droits : toutes les RH actives, sauf une RH demandeuse,
+  sont notifiées. Une RH ne peut pas traiter sa propre demande. Le motif est
+  obligatoire pour un refus ; le demandeur est ensuite notifié de la décision.
+- Traçabilité : la demande conserve valeurs, dates, statut, RH traitante et
+  motif de refus. Les actions sont également visibles dans le journal RH.
 - État : implémenté — à tester.

@@ -41,9 +41,16 @@ $aideRole = $estDg
             </div>
 
             <div class="mb-3">
-              <label for="compte-photo" class="form-label">Photo <span class="field-tag">Optionnel</span></label>
-              <input type="file" id="compte-photo" name="photo" class="form-control" accept=".jpg,.jpeg,.png" data-max-mb="2">
-              <div class="invalid-feedback">Photo JPG ou PNG, 2 Mo maximum.</div>
+              <label for="compte-residence" class="form-label">Lieu de résidence <span class="field-tag">Obligatoire</span></label>
+              <input type="text" id="compte-residence" name="lieu_residence" class="form-control" minlength="3" maxlength="255" autocomplete="street-address" placeholder="Quartier, ville" required>
+              <div class="invalid-feedback">Indiquez un lieu de résidence entre 3 et 255 caractères.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="compte-photo" class="form-label">Photo de profil <span class="field-tag">Obligatoire</span></label>
+              <input type="file" id="compte-photo" name="photo" class="form-control" accept=".jpg,.jpeg,.png" data-max-mb="2" required>
+              <div class="invalid-feedback">Photo JPG ou PNG obligatoire, 2 Mo maximum.</div>
+              <img id="compte-photo-apercu" class="avatar-preview d-none" alt="Aperçu de la photo sélectionnée">
             </div>
 
             <div class="mb-3">

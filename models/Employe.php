@@ -14,7 +14,7 @@ class Employe
         $stmt = $this
             ->pdo
             ->prepare
-            ("SELECT e.id, e.matricule, e.nom, e.prenom, e.statut,d.nom AS departement, p.intitule AS poste
+            ("SELECT e.id, e.matricule, e.nom, e.prenom, e.statut, e.photo_chemin, e.lieu_residence, d.nom AS departement, p.intitule AS poste
                 FROM employe e
                 JOIN departement d ON d.id = e.departement_id
                 JOIN poste p       ON p.id = e.poste_id
@@ -33,7 +33,7 @@ class Employe
     {
         $stmt = $this->pdo->prepare(
             "SELECT e.id, e.utilisateur_id, u.email, u.role, e.matricule, e.nom, e.prenom,
-                    e.date_naissance, e.telephone, e.photo_chemin,
+                    e.date_naissance, e.telephone, e.lieu_residence, e.photo_chemin,
                     e.date_embauche, e.statut, e.departement_id, e.poste_id,
                     d.nom AS departement,
                     p.intitule AS poste,
@@ -87,6 +87,31 @@ class Employe
         return $stmt->fetchAll();
     }
 
+    /** Structure réelle destinée à l’organigramme, limitée aux dossiers actifs. */
+    public function organigramme(): array
+    {
+        $departements = $this->pdo->query(
+            "SELECT d.id, d.nom, d.parent_id, d.chef_id,
+                    chef.id AS chef_employe_id, chef.prenom AS chef_prenom, chef.nom AS chef_nom,
+                    chef.photo_chemin AS chef_photo, chef.matricule AS chef_matricule
+             FROM departement d LEFT JOIN employe chef ON chef.id = d.chef_id AND chef.statut = 'actif'
+             ORDER BY d.nom"
+        )->fetchAll();
+        $membres = $this->pdo->query(
+            "SELECT e.id, e.departement_id, e.prenom, e.nom, e.matricule, e.photo_chemin, p.intitule AS poste
+             FROM employe e JOIN poste p ON p.id = e.poste_id WHERE e.statut = 'actif' ORDER BY e.nom, e.prenom"
+        )->fetchAll();
+        $parDepartement = [];
+        foreach ($membres as $membre) $parDepartement[(int) $membre['departement_id']][] = $membre;
+        foreach ($departements as &$departement) {
+            $liste = $parDepartement[(int) $departement['id']] ?? [];
+            $departement['membres'] = array_values(array_filter($liste, fn(array $m) => (int) $m['id'] !== (int) ($departement['chef_id'] ?? 0)));
+            $departement['effectif'] = count($liste);
+        }
+        unset($departement);
+        return $departements;
+    }
+
     public function matriculeExiste(string $matricule): bool
     {
         $stmt = $this->pdo->prepare('SELECT 1 FROM employe WHERE matricule = :matricule LIMIT 1');
@@ -113,9 +138,9 @@ class Employe
     {
         $stmt = $this->pdo->prepare(
             "INSERT INTO employe
-                (utilisateur_id, matricule, nom, prenom, date_naissance, telephone, date_embauche, statut, departement_id, poste_id)
+                (utilisateur_id, matricule, nom, prenom, date_naissance, telephone, lieu_residence, date_embauche, statut, departement_id, poste_id)
              VALUES
-                (:utilisateur_id, :matricule, :nom, :prenom, :naissance, :telephone, :embauche, 'actif', :departement_id, :poste_id)"
+                (:utilisateur_id, :matricule, :nom, :prenom, :naissance, :telephone, :lieu_residence, :embauche, 'actif', :departement_id, :poste_id)"
         );
         $stmt->execute([
             ':utilisateur_id' => $utilisateurId,
@@ -124,6 +149,7 @@ class Employe
             ':prenom'         => $d['prenom'],
             ':naissance'      => $d['naissance'],
             ':telephone'      => $d['telephone'],
+            ':lieu_residence' => $d['lieu_residence'],
             ':embauche'       => $d['date_embauche'],
             ':departement_id' => $d['departement_id'],
             ':poste_id'       => $d['poste_id'],

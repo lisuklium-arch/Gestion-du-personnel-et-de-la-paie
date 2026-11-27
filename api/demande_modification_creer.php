@@ -11,6 +11,7 @@ $service = new DemandeModificationService(
     $pdo,
     new DemandeModification($pdo),
     new Employe($pdo),
+    new Utilisateur($pdo),
     new JournalService(new JournalAction($pdo)),
     new NotificationService(new Notification($pdo), new Utilisateur($pdo), new MailService($cfg['mail']))
 );

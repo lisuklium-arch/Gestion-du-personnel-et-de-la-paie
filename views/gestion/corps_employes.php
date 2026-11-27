@@ -2,6 +2,7 @@
 require_once __DIR__ . '/bouton_compte.php';
 require_once __DIR__ . '/../../models/Utilisateur.php';
 require_once __DIR__ . '/../../services/CompteService.php';
+require_once __DIR__ . '/avatar.php';
 
 $recherche = trim((string) ($_GET['q'] ?? ''));
 $deptChoisi = (string) ($_GET['dept'] ?? '');
@@ -23,6 +24,7 @@ $liste = $utilisateurs->rechercherComptes([
     'statut_compte' => in_array($compteChoisi, ['en_attente', 'actif', 'desactive'], true) ? $compteChoisi : '',
 ]);
 $dossiers = $utilisateurs->compterDossiers();
+$sansPhoto = (int) $pdo->query('SELECT COUNT(*) FROM employe WHERE photo_chemin IS NULL AND statut = \'actif\'')->fetchColumn();
 
 $statutsListe = ['' => 'Tous : actif, suspendu, sorti'];
 foreach (STATUTS_DOSSIER as $cle => $statut) {
@@ -35,6 +37,9 @@ $comptesListe = ['' => 'Tous les comptes', 'actif' => 'Compte actif', 'desactive
             <span class="icon-tile icon-tile--sm"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></span>
             <h2 class="card-panel__title">Rechercher et filtrer</h2>
           </div>
+          <?php if ($sansPhoto > 0 && ($_SESSION['role'] ?? '') === 'rh'): ?>
+            <p class="note-info note-info--warning"><i class="fa-solid fa-camera" aria-hidden="true"></i><span><?= $sansPhoto ?> profil<?= $sansPhoto > 1 ? 's' : '' ?> actif<?= $sansPhoto > 1 ? 's' : '' ?> sans photo : les employés concernés sont signalés dans la liste.</span></p>
+          <?php endif; ?>
           <form method="get" class="filter-bar" aria-label="Filtrer les dossiers employés" data-employes-recherche data-endpoint="/api/employes_rechercher.php" data-fiche-url="<?= h($ficheUrl) ?>">
             <div class="filter-bar__field">
               <label for="emp-recherche" class="form-label">Recherche</label>
@@ -107,7 +112,7 @@ $comptesListe = ['' => 'Tous les comptes', 'actif' => 'Compte actif', 'desactive
                     $nom = $e['prenom'] . ' ' . $e['nom'];
                     $action = CompteService::actionPossible($auteur, $e); ?>
                   <tr<?= $e['statut_compte'] === 'en_attente' ? ' class="is-pending"' : '' ?> data-compte="<?= h($nom) ?>" data-id="<?= (int) $e['id'] ?>">
-                    <td data-label="Nom complet"><a class="data-table__ref" href="<?= h($ficheUrl) ?>?id=<?= h($e['matricule']) ?>"><?= h($nom) ?></a></td>
+                    <td data-label="Nom complet"><div class="cell-person"><?= avatarEmploye($e, 'sm') ?><div><a class="data-table__ref" href="<?= h($ficheUrl) ?>?id=<?= h($e['matricule']) ?>"><?= h($nom) ?></a><?php if (empty($e['photo_chemin'])): ?><p class="cell-person__meta">Photo à compléter</p><?php endif; ?></div></div></td>
                     <td data-label="Matricule"><?= h($e['matricule']) ?></td>
                     <td data-label="Département et poste"><?= h($e['departement']) ?> • <?= h($e['poste']) ?></td>
                     <td data-label="Statut"><?= badge($texteStatut, $tonStatut, false) ?></td>

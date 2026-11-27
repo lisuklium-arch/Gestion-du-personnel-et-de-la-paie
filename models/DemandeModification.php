@@ -39,7 +39,8 @@ class DemandeModification
     {
         return $this->pdo->query(
             "SELECT dm.id, dm.champ, dm.ancienne_valeur, dm.nouvelle_valeur, dm.motif, dm.date_demande,
-                    e.id AS employe_id, e.matricule, e.nom, e.prenom, d.nom AS departement, p.intitule AS poste
+                    e.id AS employe_id, e.matricule, e.nom, e.prenom, e.photo_chemin,
+                    d.nom AS departement, p.intitule AS poste
              FROM demande_modification dm
              JOIN employe e ON e.id = dm.employe_id
              JOIN departement d ON d.id = e.departement_id
@@ -52,7 +53,7 @@ class DemandeModification
     public function trouverEnAttente(int $id): ?array
     {
         $stmt = $this->pdo->prepare(
-            "SELECT dm.id, dm.employe_id, dm.champ, dm.ancienne_valeur, dm.nouvelle_valeur, dm.motif,
+            "SELECT dm.id, dm.employe_id, dm.champ, dm.ancienne_valeur, dm.nouvelle_valeur, dm.motif, dm.motif_rejet,
                     e.utilisateur_id
              FROM demande_modification dm
              JOIN employe e ON e.id = dm.employe_id
@@ -62,14 +63,31 @@ class DemandeModification
         return $stmt->fetch() ?: null;
     }
 
-    public function traiter(int $id, int $traiteParId, string $statut): bool
+    public function traiter(int $id, int $traiteParId, string $statut, ?string $motifRejet = null): bool
     {
         $stmt = $this->pdo->prepare(
             "UPDATE demande_modification
-             SET statut = :statut, traite_par_id = :traite_par_id, date_traitement = NOW()
+             SET statut = :statut, traite_par_id = :traite_par_id, motif_rejet = :motif_rejet, date_traitement = NOW()
              WHERE id = :id AND statut = 'en_attente'"
         );
-        $stmt->execute([':statut' => $statut, ':traite_par_id' => $traiteParId, ':id' => $id]);
+        $stmt->execute([':statut' => $statut, ':traite_par_id' => $traiteParId, ':motif_rejet' => $motifRejet, ':id' => $id]);
         return $stmt->rowCount() === 1;
+    }
+
+    /** Historique du lieu de résidence, visible uniquement par le demandeur. */
+    public function listerLieuResidencePourEmploye(int $employeId): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT dm.id, dm.ancienne_valeur, dm.nouvelle_valeur, dm.motif, dm.motif_rejet,
+                    dm.statut, dm.date_demande, dm.date_traitement,
+                    u.email AS traite_par_email, et.prenom AS traite_par_prenom, et.nom AS traite_par_nom
+             FROM demande_modification dm
+             LEFT JOIN utilisateur u ON u.id = dm.traite_par_id
+             LEFT JOIN employe et ON et.utilisateur_id = u.id
+             WHERE dm.employe_id = :employe_id AND dm.champ = 'lieu_residence'
+             ORDER BY dm.date_demande DESC, dm.id DESC"
+        );
+        $stmt->execute([':employe_id' => $employeId]);
+        return $stmt->fetchAll();
     }
 }

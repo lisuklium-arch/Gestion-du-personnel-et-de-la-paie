@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../gestion/aides_gestion.php';
+require_once __DIR__ . '/../gestion/avatar.php';
 require_once __DIR__ . '/../../models/DemandeModification.php';
 
 $demandesModification = (new DemandeModification($pdo))->listerEnAttente();
@@ -36,8 +37,8 @@ include __DIR__ . '/../layout/debut_page.php';
                 <tbody>
                 <?php foreach ($demandesModification as $demande): ?>
                   <tr data-demande-modification="<?= (int) $demande['id'] ?>">
-                    <td data-label="Employé"><strong><?= h($demande['prenom'] . ' ' . $demande['nom']) ?></strong><br><span class="data-table__muted"><?= h($demande['matricule'] . ' • ' . $demande['departement'] . ' • ' . $demande['poste']) ?></span></td>
-                    <td data-label="Champ"><?= h(['nom' => 'Nom', 'prenom' => 'Prénom', 'matricule' => 'Matricule', 'date_naissance' => 'Date de naissance', 'telephone' => 'Téléphone'][$demande['champ']] ?? $demande['champ']) ?></td>
+                    <td data-label="Employé"><div class="cell-person"><?= avatarEmploye($demande, 'sm') ?><div><p class="cell-person__name"><?= h($demande['prenom'] . ' ' . $demande['nom']) ?></p><p class="cell-person__meta"><?= h($demande['matricule'] . ' • ' . $demande['departement'] . ' • ' . $demande['poste']) ?></p></div></div></td>
+                    <td data-label="Champ"><?= h(['nom' => 'Nom', 'prenom' => 'Prénom', 'matricule' => 'Matricule', 'date_naissance' => 'Date de naissance', 'telephone' => 'Téléphone', 'lieu_residence' => 'Lieu de résidence'][$demande['champ']] ?? $demande['champ']) ?></td>
                     <td data-label="Valeur demandée"><span class="data-table__muted"><?= h((string) $demande['ancienne_valeur']) ?></span> → <?= h($demande['nouvelle_valeur']) ?></td>
                     <td data-label="Motif"><?= h((string) $demande['motif']) ?></td>
                     <td data-label="Décision">
@@ -46,6 +47,8 @@ include __DIR__ . '/../layout/debut_page.php';
                         <input type="hidden" name="id" value="<?= (int) $demande['id'] ?>">
                         <button type="submit" name="decision" value="acceptee" class="btn btn-primary">Accepter</button>
                         <button type="submit" name="decision" value="refusee" class="btn btn-danger-outline">Refuser</button>
+                        <label class="visually-hidden" for="motif-refus-<?= (int) $demande['id'] ?>">Motif de refus</label>
+                        <input type="text" id="motif-refus-<?= (int) $demande['id'] ?>" name="motif_rejet" class="form-control mt-2" maxlength="255" placeholder="Motif obligatoire en cas de refus" data-motif-refus>
                       </form>
                     </td>
                   </tr>

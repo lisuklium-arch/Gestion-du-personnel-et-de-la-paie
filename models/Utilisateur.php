@@ -120,7 +120,7 @@ class Utilisateur
     public function rechercherComptes(array $f = []): array
     {
         $sql = "SELECT u.id, u.email, u.role, u.statut_compte, u.derniere_connexion, u.date_validation,
-                       e.matricule, e.nom, e.prenom, e.statut AS statut_dossier,
+                       e.id AS employe_id, e.matricule, e.nom, e.prenom, e.photo_chemin, e.statut AS statut_dossier,
                        e.departement_id, e.poste_id,
                        p.intitule AS poste, d.nom AS departement,
                        c.type AS type_contrat, c.date_fin,

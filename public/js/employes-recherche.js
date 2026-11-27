@@ -57,9 +57,19 @@
 
       var tdNom = element('td');
       tdNom.setAttribute('data-label', 'Nom complet');
+      var personne = element('div', undefined, 'cell-person');
+      var avatar = element('span', undefined, 'avatar avatar--sm');
+      if (employe.photo_chemin && /^documents\/[a-f0-9]{32}\.(jpg|png)$/.test(employe.photo_chemin)) {
+        var image = element('img', undefined, 'avatar__image');
+        image.src = '/api/photo_profil.php?id=' + encodeURIComponent(employe.id) + '&v=' + encodeURIComponent(employe.photo_chemin.slice(10, 42));
+        image.alt = 'Photo de ' + nom;
+        avatar.appendChild(image);
+      } else { avatar.textContent = (employe.prenom.charAt(0) + employe.nom.charAt(0)).toUpperCase(); }
       var lien = element('a', nom, 'data-table__ref');
       lien.href = ficheUrl + '?id=' + encodeURIComponent(employe.matricule);
-      tdNom.appendChild(lien);
+      var blocNom = element('div'); blocNom.appendChild(lien);
+      if (!employe.photo_chemin) blocNom.appendChild(element('p', 'Photo à compléter', 'cell-person__meta'));
+      personne.append(avatar, blocNom); tdNom.appendChild(personne);
 
       var tdMatricule = element('td', employe.matricule);
       tdMatricule.setAttribute('data-label', 'Matricule');

@@ -176,6 +176,12 @@ class NouvelEmployeService
             return null;
         }
 
+        $lieuResidence = preg_replace('/\s+/u', ' ', $texte('lieu_residence')) ?? '';
+        if (mb_strlen($lieuResidence) < 3 || mb_strlen($lieuResidence) > 255) {
+            $erreur = 'Le lieu de résidence est obligatoire et doit contenir entre 3 et 255 caractères.';
+            return null;
+        }
+
         $matricule = $texte('matricule');
         if (!preg_match('/^EMP-[0-9]{4}$/', $matricule)) {
             $erreur = 'Matricule invalide (format EMP-0000).';
@@ -250,6 +256,7 @@ class NouvelEmployeService
             'naissance' => $naissance,
             'email' => $texte('email'),
             'telephone' => $telephone,
+            'lieu_residence' => $lieuResidence,
             'matricule' => $matricule,
             'departement_id' => $departementId,
             'poste_id' => $posteId,
@@ -289,7 +296,10 @@ class NouvelEmployeService
     private function controlerPhoto(?array $f, ?string &$erreur): ?array
     {
         $erreur = null;
-        if ($f === null || ($f['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) return null;
+        if ($f === null || ($f['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            $erreur = 'Une photo de profil est obligatoire.';
+            return null;
+        }
         if (($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || $f['size'] > 2 * 1024 * 1024) {
             $erreur = 'La photo est invalide ou dépasse 2 Mo.'; return null;
         }

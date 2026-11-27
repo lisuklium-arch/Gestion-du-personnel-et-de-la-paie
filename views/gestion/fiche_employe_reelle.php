@@ -3,6 +3,7 @@ require_once __DIR__ . '/aides_gestion.php';
 require_once __DIR__ . '/../../models/Employe.php';
 require_once __DIR__ . '/../../models/Contrat.php';
 require_once __DIR__ . '/../../models/DocumentEmploye.php';
+require_once __DIR__ . '/avatar.php';
 
 $matricule = is_string($_GET['id'] ?? null) ? trim($_GET['id']) : '';
 $employe = $matricule === '' ? null : (new Employe($pdo))->trouverParMatricule($matricule);
@@ -21,8 +22,8 @@ $sousTitre = h($employe['prenom'] . ' ' . $employe['nom']) . ' • ' . h($employ
 include __DIR__ . '/../layout/debut_page.php';
 ?>
 <div class="duo">
-  <section class="card-panel"><div class="card-panel__head"><h2 class="card-panel__title">Identité et rattachement</h2></div><dl class="field-grid">
-    <?php champLecture('Nom', $employe['nom']); champLecture('Prénom', $employe['prenom']); champLecture('Matricule', $employe['matricule']); champLecture('Date de naissance', $employe['date_naissance'] ? (new DateTime($employe['date_naissance']))->format('d/m/Y') : '—'); champLecture('Téléphone', $employe['telephone'] ?? '—'); champLecture('Département', $employe['departement']); champLecture('Poste', $employe['poste']); champLecture('Chef de département', trim(($employe['chef_prenom'] ?? '') . ' ' . ($employe['chef_nom'] ?? '')) ?: 'Non désigné'); ?>
+  <section class="card-panel"><div class="card-panel__head"><?= avatarEmploye($employe, 'lg') ?><h2 class="card-panel__title">Identité et rattachement</h2></div><dl class="field-grid">
+    <?php champLecture('Nom', $employe['nom']); champLecture('Prénom', $employe['prenom']); champLecture('Matricule', $employe['matricule']); champLecture('Date de naissance', $employe['date_naissance'] ? (new DateTime($employe['date_naissance']))->format('d/m/Y') : '—'); champLecture('Téléphone', $employe['telephone'] ?? '—'); champLecture('Lieu de résidence', $employe['lieu_residence'] ?: 'Non renseigné'); champLecture('Département', $employe['departement']); champLecture('Poste', $employe['poste']); champLecture('Chef de département', trim(($employe['chef_prenom'] ?? '') . ' ' . ($employe['chef_nom'] ?? '')) ?: 'Non désigné'); ?>
   </dl></section>
   <section class="card-panel"><div class="card-panel__head"><h2 class="card-panel__title">Contrat et compte</h2></div><dl class="field-grid">
     <?php champLecture('E-mail professionnel', $employe['email']); champLecture('Rôle applicatif', $employe['role']); champLecture('Date d’embauche', (new DateTime($employe['date_embauche']))->format('d/m/Y')); ?>

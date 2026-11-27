@@ -17,8 +17,9 @@ $service = new DemandeModificationService(
     $pdo,
     new DemandeModification($pdo),
     new Employe($pdo),
+    new Utilisateur($pdo),
     new JournalService(new JournalAction($pdo)),
     new NotificationService(new Notification($pdo), new Utilisateur($pdo), new MailService($cfg['mail']))
 );
-$resultat = $service->traiter((int) $_SESSION['utilisateur_id'], $id, $decision);
+$resultat = $service->traiter((int) $_SESSION['utilisateur_id'], $id, $decision, $_POST['motif_rejet'] ?? null);
 reponseJson($resultat['ok'] ? 200 : 422, $resultat);
